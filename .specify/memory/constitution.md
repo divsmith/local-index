@@ -1,50 +1,40 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!-- 
+Sync Impact Report:
+Version change: N/A → 1.0.0
+Added sections: All principles (Code Quality First, Modular Architecture, Test-Driven Development, Documentation-Driven, Security-First), Additional Constraints, Development Workflow, and Governance sections
+Removed sections: None
+Templates requiring updates: ✅ no changes needed - .specify/templates/plan-template.md, .specify/templates/spec-template.md, .specify/templates/tasks-template.md (templates reference constitution generally but don't implement specific principles)
+Follow-up TODOs: None
+-->
+# Qwen Code Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### Code Quality First
+All code must meet high quality standards; Every feature must include comprehensive unit tests; Code reviews are mandatory before merging to ensure maintainability, readability, and performance.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### Modular Architecture
+Components must have well-defined interfaces; Dependencies between modules should be minimal and clearly documented; Each module must be independently testable and deployable where possible.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### Test-Driven Development (NON-NEGOTIABLE)
+TDD mandatory: Tests written → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced; New features must not break existing tests.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### Documentation-Driven
+All code must be documented before merging; APIs must have comprehensive documentation; Comments must explain the 'why' not just the 'what'; README files must be updated with any significant changes.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### Security-First
+Security considerations must be addressed at the design phase; Input validation is mandatory for all user inputs; All components must follow security best practices; Vulnerability assessments required before production releases.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+## Additional Constraints
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+Technology stack must follow industry standards; All dependencies must be regularly updated and audited for security vulnerabilities; Performance benchmarks must be maintained or improved with each release; All external APIs must have fallback mechanisms.
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+## Development Workflow
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+All code changes must go through peer review; Pull requests must pass all automated tests before merging; Code coverage must not decrease below 80%; All commits must follow conventional commit format.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+Constitutional compliance must be verified during code reviews; Amendments to this constitution require team consensus and documented approval; This constitution supersedes all other development practices in case of conflicts.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2025-10-04 | **Last Amended**: 2025-10-04

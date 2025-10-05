@@ -1,8 +1,7 @@
+# Implementation Plan: High Performance Local CLI Vectorized Codebase Search
 
-# Implementation Plan: [FEATURE]
-
-**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
-**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
+**Branch**: `001-high-performance-local` | **Date**: 2025-10-04 | **Spec**: [/app/specs/001-high-performance-local/spec.md](file:///app/specs/001-high-performance-local/spec.md)
+**Input**: Feature specification from `/specs/001-high-performance-local/spec.md`
 
 ## Execution Flow (/plan command scope)
 ```
@@ -31,29 +30,34 @@
 - Phase 3-4: Implementation execution (manual or via tools)
 
 ## Summary
-[Extract from feature spec: primary requirement + technical approach from research]
+The feature enables developers to perform high-performance vectorized searches on local codebases via a CLI interface. The approach will use Go with an embedded vector database to achieve fast search performance and relevance ranking. The system will recursively scan code files, index them using vector embeddings, and provide search results with context, file locations, and line numbers.
 
 ## Technical Context
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
-**Project Type**: [single/web/mobile - determines source structure]  
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+**Language/Version**: Go 1.21
+**Primary Dependencies**: An embedded vector database solution (e.g., Golang vector libraries for vectorized search)  
+**Storage**: Local embedded vector database for indexing code, temporary search result caching
+**Testing**: Go's built-in testing framework for unit and integration tests
+**Target Platform**: Cross-platform CLI tool (Linux, macOS, Windows)
+**Project Type**: Single CLI application with embedded indexing and search capabilities
+**Performance Goals**: Response under 2 seconds for repositories up to 100,000 lines, under 10 seconds for repositories up to 1,000,000 lines
+**Constraints**: Memory efficient (<500MB for typical usage), fast indexing and search, minimal CPU usage during indexing
+**Scale/Scope**: Local codebase search up to 1 million lines of code
 
 ## Constitution Check
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+Based on the Qwen Code Constitution:
+- Code Quality First: Implementation will include comprehensive unit tests
+- Modular Architecture: Components will have well-defined interfaces between indexing, search, and CLI modules
+- Test-Driven Development: Tests will be written before implementation following Red-Green-Refactor cycle
+- Documentation-Driven: All code will be documented before merging with clear comments explaining the 'why'
+- Security-First: Input validation will be implemented for all user inputs and file paths
 
 ## Project Structure
 
 ### Documentation (this feature)
 ```
-specs/[###-feature]/
+specs/001-high-performance-local/
 ├── plan.md              # This file (/plan command output)
 ├── research.md          # Phase 0 output (/plan command)
 ├── data-model.md        # Phase 1 output (/plan command)
@@ -63,50 +67,41 @@ specs/[###-feature]/
 ```
 
 ### Source Code (repository root)
-<!--
-  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
-  for this feature. Delete unused options and expand the chosen structure with
-  real paths (e.g., apps/admin, packages/something). The delivered plan must
-  not include Option labels.
--->
 ```
-# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
 src/
 ├── models/
+│   ├── code_index.go      # Code indexing structures and logic
+│   ├── search_query.go    # Search query processing
+│   └── search_result.go   # Search result structure
 ├── services/
+│   ├── indexing_service.go  # Handles codebase indexing
+│   └── search_service.go    # Performs vectorized search operations
 ├── cli/
+│   ├── main.go              # CLI entry point
+│   ├── search_cmd.go        # Search command implementation
+│   └── index_cmd.go         # Index command implementation
 └── lib/
+    ├── vector_db.go         # Vector database wrapper
+    ├── file_scanner.go      # File system scanner
+    └── parser.go            # Code parsing utilities
 
 tests/
 ├── contract/
 ├── integration/
+│   ├── search_integration_test.go
+│   └── indexing_integration_test.go
 └── unit/
-
-# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
-backend/
-├── src/
-│   ├── models/
-│   ├── services/
-│   └── api/
-└── tests/
-
-frontend/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   └── services/
-└── tests/
-
-# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
-api/
-└── [same as backend above]
-
-ios/ or android/
-└── [platform-specific structure: feature modules, UI flows, platform tests]
+    ├── models/
+    │   ├── code_index_test.go
+    │   └── search_query_test.go
+    ├── services/
+    │   ├── indexing_service_test.go
+    │   └── search_service_test.go
+    └── cli/
+        └── search_cmd_test.go
 ```
 
-**Structure Decision**: [Document the selected structure and reference the real
-directories captured above]
+**Structure Decision**: Single CLI project structure with well-separated concerns between models, services, CLI interface, and utility libraries. This structure enables modular development, independent testing of components, and follows Go project conventions.
 
 ## Phase 0: Outline & Research
 1. **Extract unknowns from Technical Context** above:
@@ -202,18 +197,18 @@ directories captured above]
 *This checklist is updated during execution flow*
 
 **Phase Status**:
-- [ ] Phase 0: Research complete (/plan command)
-- [ ] Phase 1: Design complete (/plan command)
-- [ ] Phase 2: Task planning complete (/plan command - describe approach only)
+- [x] Phase 0: Research complete (/plan command)
+- [x] Phase 1: Design complete (/plan command)
+- [x] Phase 2: Task planning complete (/plan command - describe approach only)
 - [ ] Phase 3: Tasks generated (/tasks command)
 - [ ] Phase 4: Implementation complete
 - [ ] Phase 5: Validation passed
 
 **Gate Status**:
-- [ ] Initial Constitution Check: PASS
-- [ ] Post-Design Constitution Check: PASS
-- [ ] All NEEDS CLARIFICATION resolved
-- [ ] Complexity deviations documented
+- [x] Initial Constitution Check: PASS
+- [x] Post-Design Constitution Check: PASS
+- [x] All NEEDS CLARIFICATION resolved
+- [x] Complexity deviations documented
 
 ---
-*Based on Constitution v2.1.1 - See `/memory/constitution.md`*
+*Based on Constitution v1.0.0 - See `/memory/constitution.md`*
