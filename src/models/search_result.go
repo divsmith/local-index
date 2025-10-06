@@ -10,32 +10,32 @@ import (
 
 // SearchResult represents a single match found during search
 type SearchResult struct {
-	FilePath        string                 `json:"file_path"`
-	StartLine       int                    `json:"start_line"`
-	EndLine         int                    `json:"end_line"`
-	Content         string                 `json:"content"`
-	Context         string                 `json:"context"`
-	RelevanceScore  float64                `json:"relevance_score"`
-	VectorDistance  float64                `json:"vector_distance"`
-	Language        string                 `json:"language"`
-	MatchType       MatchType              `json:"match_type"`
-	Highlights      []string               `json:"highlights"`
-	Metadata        map[string]interface{} `json:"metadata"`
-	Rank            int                    `json:"rank"`
-	FoundAt         time.Time              `json:"found_at"`
+	FilePath       string                 `json:"file_path"`
+	StartLine      int                    `json:"start_line"`
+	EndLine        int                    `json:"end_line"`
+	Content        string                 `json:"content"`
+	Context        string                 `json:"context"`
+	RelevanceScore float64                `json:"relevance_score"`
+	VectorDistance float64                `json:"vector_distance"`
+	Language       string                 `json:"language"`
+	MatchType      MatchType              `json:"match_type"`
+	Highlights     []string               `json:"highlights"`
+	Metadata       map[string]interface{} `json:"metadata"`
+	Rank           int                    `json:"rank"`
+	FoundAt        time.Time              `json:"found_at"`
 }
 
 // MatchType represents the type of match found
 type MatchType string
 
 const (
-	MatchTypeExact      MatchType = "exact"      // Exact string match
-	MatchTypeSemantic   MatchType = "semantic"   // Vector similarity match
-	MatchTypeFuzzy      MatchType = "fuzzy"      // Fuzzy string match
-	MatchTypeRegex      MatchType = "regex"      // Regular expression match
-	MatchTypePartial    MatchType = "partial"    // Partial word match
-	MatchTypeSynonym    MatchType = "synonym"    // Synonym match
-	MatchTypeHybrid     MatchType = "hybrid"     // Combination of multiple types
+	MatchTypeExact    MatchType = "exact"    // Exact string match
+	MatchTypeSemantic MatchType = "semantic" // Vector similarity match
+	MatchTypeFuzzy    MatchType = "fuzzy"    // Fuzzy string match
+	MatchTypeRegex    MatchType = "regex"    // Regular expression match
+	MatchTypePartial  MatchType = "partial"  // Partial word match
+	MatchTypeSynonym  MatchType = "synonym"  // Synonym match
+	MatchTypeHybrid   MatchType = "hybrid"   // Combination of multiple types
 )
 
 // NewSearchResult creates a new SearchResult with default values
@@ -45,14 +45,14 @@ func NewSearchResult(filePath string, startLine, endLine int, content string) *S
 		StartLine:      startLine,
 		EndLine:        endLine,
 		Content:        strings.TrimSpace(content),
-		Context:        "",                 // Will be populated separately
-		RelevanceScore: 0.0,                // Will be calculated
-		VectorDistance:  0.0,                // Will be calculated for semantic matches
-		Language:       "",                 // Will be detected
-		MatchType:      MatchTypePartial,    // Default match type
+		Context:        "",               // Will be populated separately
+		RelevanceScore: 0.0,              // Will be calculated
+		VectorDistance: 0.0,              // Will be calculated for semantic matches
+		Language:       "",               // Will be detected
+		MatchType:      MatchTypePartial, // Default match type
 		Highlights:     make([]string, 0),
 		Metadata:       make(map[string]interface{}),
-		Rank:           0,                   // Will be set during ranking
+		Rank:           0, // Will be set during ranking
 		FoundAt:        time.Now(),
 	}
 }
@@ -103,13 +103,13 @@ func (sr *SearchResult) Validate() error {
 
 	// Validate match type
 	validTypes := map[MatchType]bool{
-		MatchTypeExact:   true,
+		MatchTypeExact:    true,
 		MatchTypeSemantic: true,
-		MatchTypeFuzzy:   true,
-		MatchTypeRegex:   true,
-		MatchTypePartial: true,
-		MatchTypeSynonym: true,
-		MatchTypeHybrid:  true,
+		MatchTypeFuzzy:    true,
+		MatchTypeRegex:    true,
+		MatchTypePartial:  true,
+		MatchTypeSynonym:  true,
+		MatchTypeHybrid:   true,
 	}
 
 	if !validTypes[sr.MatchType] {
@@ -222,19 +222,19 @@ func (sr *SearchResult) CalculateContext(contextLines int) (string, error) {
 // GetMatchInfo returns detailed information about the match
 func (sr *SearchResult) GetMatchInfo() MatchInfo {
 	return MatchInfo{
-		FilePath:        sr.FilePath,
-		FileName:        sr.GetFileName(),
-		Extension:       sr.GetFileExtension(),
-		Language:        sr.Language,
-		StartLine:       sr.StartLine,
-		EndLine:         sr.EndLine,
-		LineCount:       sr.GetLineCount(),
-		RelevanceScore:  sr.RelevanceScore,
-		VectorDistance:  sr.VectorDistance,
-		MatchType:       sr.MatchType,
-		HighlightCount:  len(sr.Highlights),
-		HasContext:      sr.Context != "",
-		Rank:            sr.Rank,
+		FilePath:       sr.FilePath,
+		FileName:       sr.GetFileName(),
+		Extension:      sr.GetFileExtension(),
+		Language:       sr.Language,
+		StartLine:      sr.StartLine,
+		EndLine:        sr.EndLine,
+		LineCount:      sr.GetLineCount(),
+		RelevanceScore: sr.RelevanceScore,
+		VectorDistance: sr.VectorDistance,
+		MatchType:      sr.MatchType,
+		HighlightCount: len(sr.Highlights),
+		HasContext:     sr.Context != "",
+		Rank:           sr.Rank,
 	}
 }
 

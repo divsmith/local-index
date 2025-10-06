@@ -12,12 +12,12 @@ import (
 
 // FileEntry represents a single file in the indexed codebase
 type FileEntry struct {
-	FilePath    string      `json:"file_path"`
+	FilePath     string      `json:"file_path"`
 	LastModified time.Time   `json:"last_modified"`
-	ContentHash string      `json:"content_hash"`
-	Chunks      []CodeChunk `json:"chunks"`
-	Size        int64       `json:"size"`
-	Language    string      `json:"language"`
+	ContentHash  string      `json:"content_hash"`
+	Chunks       []CodeChunk `json:"chunks"`
+	Size         int64       `json:"size"`
+	Language     string      `json:"language"`
 }
 
 // NewFileEntry creates a new FileEntry from a file path
@@ -41,12 +41,12 @@ func NewFileEntry(filePath string) (*FileEntry, error) {
 	language := detectLanguage(filePath)
 
 	return &FileEntry{
-		FilePath:    filePath,
+		FilePath:     filePath,
 		LastModified: fileInfo.ModTime(),
-		ContentHash: contentHash,
-		Chunks:      make([]CodeChunk, 0),
-		Size:        fileInfo.Size(),
-		Language:    language,
+		ContentHash:  contentHash,
+		Chunks:       make([]CodeChunk, 0),
+		Size:         fileInfo.Size(),
+		Language:     language,
 	}, nil
 }
 
@@ -158,11 +158,11 @@ func (fe *FileEntry) Validate() error {
 // GetStats returns statistics about the file entry
 func (fe *FileEntry) GetStats() FileEntryStats {
 	stats := FileEntryStats{
-		FilePath:    fe.FilePath,
+		FilePath:     fe.FilePath,
 		LastModified: fe.LastModified,
-		Size:        fe.Size,
-		Language:    fe.Language,
-		ChunkCount:  len(fe.Chunks),
+		Size:         fe.Size,
+		Language:     fe.Language,
+		ChunkCount:   len(fe.Chunks),
 	}
 
 	// Calculate total lines covered by chunks
@@ -222,14 +222,14 @@ func (fe *FileEntry) FromJSON(data []byte) error {
 
 // FileEntryStats contains statistics about a file entry
 type FileEntryStats struct {
-	FilePath         string    `json:"file_path"`
-	LastModified     time.Time `json:"last_modified"`
-	Size             int64     `json:"size"`
-	Language         string    `json:"language"`
-	LineCount        int       `json:"line_count"`
-	ChunkCount       int       `json:"chunk_count"`
-	TotalChunkLines  int       `json:"total_chunk_lines"`
-	CoveragePercent  float64   `json:"coverage_percent"`
+	FilePath        string    `json:"file_path"`
+	LastModified    time.Time `json:"last_modified"`
+	Size            int64     `json:"size"`
+	Language        string    `json:"language"`
+	LineCount       int       `json:"line_count"`
+	ChunkCount      int       `json:"chunk_count"`
+	TotalChunkLines int       `json:"total_chunk_lines"`
+	CoveragePercent float64   `json:"coverage_percent"`
 }
 
 // detectLanguage detects the programming language based on file extension
@@ -237,44 +237,44 @@ func detectLanguage(filePath string) string {
 	ext := strings.ToLower(filepath.Ext(filePath))
 
 	languageMap := map[string]string{
-		".go":   "Go",
-		".js":   "JavaScript",
-		".ts":   "TypeScript",
-		".jsx":  "JavaScript",
-		".tsx":  "TypeScript",
-		".py":   "Python",
-		".java": "Java",
-		".c":    "C",
-		".cpp":  "C++",
-		".cc":   "C++",
-		".cxx":  "C++",
-		".h":    "C/C++ Header",
-		".hpp":  "C++ Header",
-		".cs":   "C#",
-		".php":  "PHP",
-		".rb":   "Ruby",
-		".swift": "Swift",
-		".kt":   "Kotlin",
-		".rs":   "Rust",
-		".scala": "Scala",
-		".sh":   "Shell",
-		".bash": "Shell",
-		".zsh":  "Shell",
-		".fish": "Shell",
-		".ps1":  "PowerShell",
-		".sql":  "SQL",
-		".html": "HTML",
-		".css":  "CSS",
-		".scss": "SCSS",
-		".sass": "Sass",
-		".less": "Less",
-		".xml":  "XML",
-		".yaml": "YAML",
-		".yml":  "YAML",
-		".json": "JSON",
-		".toml": "TOML",
-		".md":   "Markdown",
-		".txt":  "Text",
+		".go":         "Go",
+		".js":         "JavaScript",
+		".ts":         "TypeScript",
+		".jsx":        "JavaScript",
+		".tsx":        "TypeScript",
+		".py":         "Python",
+		".java":       "Java",
+		".c":          "C",
+		".cpp":        "C++",
+		".cc":         "C++",
+		".cxx":        "C++",
+		".h":          "C/C++ Header",
+		".hpp":        "C++ Header",
+		".cs":         "C#",
+		".php":        "PHP",
+		".rb":         "Ruby",
+		".swift":      "Swift",
+		".kt":         "Kotlin",
+		".rs":         "Rust",
+		".scala":      "Scala",
+		".sh":         "Shell",
+		".bash":       "Shell",
+		".zsh":        "Shell",
+		".fish":       "Shell",
+		".ps1":        "PowerShell",
+		".sql":        "SQL",
+		".html":       "HTML",
+		".css":        "CSS",
+		".scss":       "SCSS",
+		".sass":       "Sass",
+		".less":       "Less",
+		".xml":        "XML",
+		".yaml":       "YAML",
+		".yml":        "YAML",
+		".json":       "JSON",
+		".toml":       "TOML",
+		".md":         "Markdown",
+		".txt":        "Text",
 		".dockerfile": "Dockerfile",
 	}
 
@@ -333,44 +333,44 @@ func isSupportedFileType(filePath string) bool {
 	ext := strings.ToLower(filepath.Ext(filePath))
 
 	supportedExtensions := map[string]bool{
-		".go":   true,
-		".js":   true,
-		".ts":   true,
-		".jsx":  true,
-		".tsx":  true,
-		".py":   true,
-		".java": true,
-		".c":    true,
-		".cpp":  true,
-		".cc":   true,
-		".cxx":  true,
-		".h":    true,
-		".hpp":  true,
-		".cs":   true,
-		".php":  true,
-		".rb":   true,
-		".swift": true,
-		".kt":   true,
-		".rs":   true,
-		".scala": true,
-		".sh":   true,
-		".bash": true,
-		".zsh":  true,
-		".fish": true,
-		".ps1":  true,
-		".sql":  true,
-		".html": true,
-		".css":  true,
-		".scss": true,
-		".sass": true,
-		".less": true,
-		".xml":  true,
-		".yaml": true,
-		".yml":  true,
-		".json": true,
-		".toml": true,
-		".md":   true,
-		".txt":  true,
+		".go":         true,
+		".js":         true,
+		".ts":         true,
+		".jsx":        true,
+		".tsx":        true,
+		".py":         true,
+		".java":       true,
+		".c":          true,
+		".cpp":        true,
+		".cc":         true,
+		".cxx":        true,
+		".h":          true,
+		".hpp":        true,
+		".cs":         true,
+		".php":        true,
+		".rb":         true,
+		".swift":      true,
+		".kt":         true,
+		".rs":         true,
+		".scala":      true,
+		".sh":         true,
+		".bash":       true,
+		".zsh":        true,
+		".fish":       true,
+		".ps1":        true,
+		".sql":        true,
+		".html":       true,
+		".css":        true,
+		".scss":       true,
+		".sass":       true,
+		".less":       true,
+		".xml":        true,
+		".yaml":       true,
+		".yml":        true,
+		".json":       true,
+		".toml":       true,
+		".md":         true,
+		".txt":        true,
 		".dockerfile": true,
 	}
 

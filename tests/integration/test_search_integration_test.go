@@ -1,8 +1,10 @@
 package integration
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -166,7 +168,7 @@ func LogError(message string, err error) {
 	// Create directory structure and files
 	for path, content := range files {
 		fullPath := tempDir + "/" + path
-		dir := tempDir + "/" + strings.Dir(path)
+		dir := tempDir + "/" + filepath.Dir(path)
 
 		if dir != tempDir {
 			if err := os.MkdirAll(dir, 0755); err != nil {
@@ -414,7 +416,7 @@ func Process%d(items []string) error {
 	}
 	return nil
 }
-`, i, i, i, i, i)
+`, i, i, i, i)
 
 		err := os.WriteFile(tempDir+"/"+fileName, []byte(content), 0644)
 		if err != nil {

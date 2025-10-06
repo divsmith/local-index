@@ -13,13 +13,13 @@ import (
 
 // CodeIndex represents the indexed representation of the codebase
 type CodeIndex struct {
-	ID             string                   `json:"id"`
-	Version        string                   `json:"version"`
-	RepositoryPath string                   `json:"repository_path"`
-	LastModified   time.Time                `json:"last_modified"`
-	FileEntries    map[string]*FileEntry    `json:"file_entries"`
-	vectorStore    VectorStore              `json:"-"` // Not serialized
-	mu             sync.RWMutex             `json:"-"` // For concurrent access
+	ID             string                `json:"id"`
+	Version        string                `json:"version"`
+	RepositoryPath string                `json:"repository_path"`
+	LastModified   time.Time             `json:"last_modified"`
+	FileEntries    map[string]*FileEntry `json:"file_entries"`
+	vectorStore    VectorStore           `json:"-"` // Not serialized
+	mu             sync.RWMutex          `json:"-"` // For concurrent access
 }
 
 // VectorStore interface for vector database operations
@@ -120,11 +120,11 @@ func (ci *CodeIndex) AddFileEntry(entry *FileEntry) error {
 	// Index all chunks in vector store
 	for _, chunk := range entry.Chunks {
 		metadata := map[string]interface{}{
-			"file_path":   relativePath,
-			"start_line":  chunk.StartLine,
-			"end_line":    chunk.EndLine,
-			"content":     chunk.Content,
-			"context":     chunk.Context,
+			"file_path":  relativePath,
+			"start_line": chunk.StartLine,
+			"end_line":   chunk.EndLine,
+			"content":    chunk.Content,
+			"context":    chunk.Context,
 		}
 
 		if err := ci.vectorStore.Insert(chunk.ID, chunk.Vector, metadata); err != nil {
@@ -198,11 +198,11 @@ func (ci *CodeIndex) GetStats() IndexStats {
 	defer ci.mu.RUnlock()
 
 	stats := IndexStats{
-		TotalFiles:      len(ci.FileEntries),
-		TotalChunks:     0,
-		LastModified:    ci.LastModified,
-		RepositoryPath:  ci.RepositoryPath,
-		FileTypes:       make(map[string]int),
+		TotalFiles:     len(ci.FileEntries),
+		TotalChunks:    0,
+		LastModified:   ci.LastModified,
+		RepositoryPath: ci.RepositoryPath,
+		FileTypes:      make(map[string]int),
 	}
 
 	for _, entry := range ci.FileEntries {

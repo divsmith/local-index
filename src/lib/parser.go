@@ -297,9 +297,9 @@ func (p *SimpleCodeParser) isGoFunctionDefinition(line string) bool {
 
 	// Go function patterns
 	patterns := []string{
-		`^func\s+\w+\s*\(`,          // func name(
+		`^func\s+\w+\s*\(`,                    // func name(
 		`^func\s*\(\w+\s+\*?\w+\)\s*\w+\s*\(`, // func (r *Receiver) name(
-		`^func\s+\w+\s*[^{]*\{`,      // func name(args) {
+		`^func\s+\w+\s*[^{]*\{`,               // func name(args) {
 	}
 
 	for _, pattern := range patterns {
@@ -326,11 +326,11 @@ func (p *SimpleCodeParser) isJSFunctionDefinition(line string) bool {
 
 	patterns := []string{
 		`^function\s+\w+\s*\(`,      // function name(
-		`^const\s+\w+\s*=\s*\(`,      // const name = (
-		`^let\s+\w+\s*=\s*\(`,        // let name = (
-		`^var\s+\w+\s*=\s*\(`,        // var name = (
+		`^const\s+\w+\s*=\s*\(`,     // const name = (
+		`^let\s+\w+\s*=\s*\(`,       // let name = (
+		`^var\s+\w+\s*=\s*\(`,       // var name = (
 		`^\w+\s*:\s*\([^)]*\)\s*=>`, // name: (args) =>
-		`^\w+\s*\([^)]*\)\s*{`,       // name(args) {
+		`^\w+\s*\([^)]*\)\s*{`,      // name(args) {
 	}
 
 	for _, pattern := range patterns {
@@ -347,23 +347,23 @@ func (p *SimpleCodeParser) isSignificantLine(line string) bool {
 
 	// Skip simple lines
 	if line == "" ||
-	   strings.HasPrefix(line, "//") ||
-	   strings.HasPrefix(line, "/*") ||
-	   strings.HasPrefix(line, "*") ||
-	   strings.HasPrefix(line, "}") ||
-	   strings.HasPrefix(line, "]") ||
-	   strings.HasPrefix(line, ")") {
+		strings.HasPrefix(line, "//") ||
+		strings.HasPrefix(line, "/*") ||
+		strings.HasPrefix(line, "*") ||
+		strings.HasPrefix(line, "}") ||
+		strings.HasPrefix(line, "]") ||
+		strings.HasPrefix(line, ")") {
 		return false
 	}
 
 	// Check for significant patterns
 	significantPatterns := []string{
-		`^var\s+`, `^let\s+`, `^const\s+`,  // Variable declarations
+		`^var\s+`, `^let\s+`, `^const\s+`, // Variable declarations
 		`^if\s+`, `^else`, `^for\s+`, `^while\s+`, // Control flow
-		`^function\s+`, `=>`, `return\s+`,       // Functions
-		`^class\s+`, `^extends\s+`,              // Classes
-		`^import\s+`, `^export\s+`,              // Modules
-		`\{$`, `\}`,                            // Braces
+		`^function\s+`, `=>`, `return\s+`, // Functions
+		`^class\s+`, `^extends\s+`, // Classes
+		`^import\s+`, `^export\s+`, // Modules
+		`\{$`, `\}`, // Braces
 	}
 
 	for _, pattern := range significantPatterns {
@@ -380,44 +380,44 @@ func (p *SimpleCodeParser) detectLanguage(filePath string) string {
 	ext := strings.ToLower(filepath.Ext(filePath))
 
 	languageMap := map[string]string{
-		".go":   "Go",
-		".js":   "JavaScript",
-		".ts":   "TypeScript",
-		".jsx":  "JavaScript",
-		".tsx":  "TypeScript",
-		".py":   "Python",
-		".java": "Java",
-		".c":    "C",
-		".cpp":  "C++",
-		".cc":   "C++",
-		".cxx":  "C++",
-		".h":    "C/C++ Header",
-		".hpp":  "C++ Header",
-		".cs":   "C#",
-		".php":  "PHP",
-		".rb":   "Ruby",
-		".swift": "Swift",
-		".kt":   "Kotlin",
-		".rs":   "Rust",
-		".scala": "Scala",
-		".sh":   "Shell",
-		".bash": "Shell",
-		".zsh":  "Shell",
-		".fish": "Shell",
-		".ps1":  "PowerShell",
-		".sql":  "SQL",
-		".html": "HTML",
-		".css":  "CSS",
-		".scss": "SCSS",
-		".sass": "Sass",
-		".less": "Less",
-		".xml":  "XML",
-		".yaml": "YAML",
-		".yml":  "YAML",
-		".json": "JSON",
-		".toml": "TOML",
-		".md":   "Markdown",
-		".txt":  "Text",
+		".go":         "Go",
+		".js":         "JavaScript",
+		".ts":         "TypeScript",
+		".jsx":        "JavaScript",
+		".tsx":        "TypeScript",
+		".py":         "Python",
+		".java":       "Java",
+		".c":          "C",
+		".cpp":        "C++",
+		".cc":         "C++",
+		".cxx":        "C++",
+		".h":          "C/C++ Header",
+		".hpp":        "C++ Header",
+		".cs":         "C#",
+		".php":        "PHP",
+		".rb":         "Ruby",
+		".swift":      "Swift",
+		".kt":         "Kotlin",
+		".rs":         "Rust",
+		".scala":      "Scala",
+		".sh":         "Shell",
+		".bash":       "Shell",
+		".zsh":        "Shell",
+		".fish":       "Shell",
+		".ps1":        "PowerShell",
+		".sql":        "SQL",
+		".html":       "HTML",
+		".css":        "CSS",
+		".scss":       "SCSS",
+		".sass":       "Sass",
+		".less":       "Less",
+		".xml":        "XML",
+		".yaml":       "YAML",
+		".yml":        "YAML",
+		".json":       "JSON",
+		".toml":       "TOML",
+		".md":         "Markdown",
+		".txt":        "Text",
 		".dockerfile": "Dockerfile",
 	}
 

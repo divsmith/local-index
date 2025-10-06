@@ -13,12 +13,12 @@ import (
 
 // IndexingService handles codebase indexing operations
 type IndexingService struct {
-	fileScanner    FileScanner
-	codeParser     CodeParser
-	vectorStore    models.VectorStore
-	logger         Logger
-	indexOptions   IndexingOptions
-	mu             sync.RWMutex
+	fileScanner  FileScanner
+	codeParser   CodeParser
+	vectorStore  models.VectorStore
+	logger       Logger
+	indexOptions IndexingOptions
+	mu           sync.RWMutex
 }
 
 // IndexingOptions contains options for the indexing process
@@ -433,8 +433,8 @@ func (is *IndexingService) createOrUpdateIndex(repositoryPath string, existingIn
 func (is *IndexingService) GetIndexingStatus(indexPath string) (*IndexingStatus, error) {
 	if _, err := os.Stat(indexPath); os.IsNotExist(err) {
 		return &IndexingStatus{
-			Exists:   false,
-			Message:  "No index found",
+			Exists:    false,
+			Message:   "No index found",
 			CreatedAt: time.Time{},
 		}, nil
 	}

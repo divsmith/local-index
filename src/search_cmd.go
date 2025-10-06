@@ -83,15 +83,15 @@ func (cmd *SearchCommand) Execute(args []string) error {
 
 // SearchOptions contains search command options
 type SearchOptions struct {
-	maxResults    int
-	filePattern   string
-	withContext   bool
-	force         bool
-	format        string
-	threshold     float64
-	semantic      bool
-	exact         bool
-	fuzzy         bool
+	maxResults  int
+	filePattern string
+	withContext bool
+	force       bool
+	format      string
+	threshold   float64
+	semantic    bool
+	exact       bool
+	fuzzy       bool
 }
 
 // parseSearchOptions parses command line options for search

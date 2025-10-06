@@ -10,14 +10,14 @@ import (
 
 // SearchResults represents a collection of search results
 type SearchResults struct {
-	Query         *SearchQuery    `json:"query"`
-	Results       []*SearchResult `json:"results"`
-	TotalResults  int             `json:"total_results"`
-	ExecutionTime time.Duration   `json:"execution_time"`
-	HasMore       bool            `json:"has_more"`
-	SearchedFiles int             `json:"searched_files"`
+	Query         *SearchQuery           `json:"query"`
+	Results       []*SearchResult        `json:"results"`
+	TotalResults  int                    `json:"total_results"`
+	ExecutionTime time.Duration          `json:"execution_time"`
+	HasMore       bool                   `json:"has_more"`
+	SearchedFiles int                    `json:"searched_files"`
 	Metadata      map[string]interface{} `json:"metadata"`
-	CreatedAt     time.Time       `json:"created_at"`
+	CreatedAt     time.Time              `json:"created_at"`
 }
 
 // NewSearchResults creates a new SearchResults instance
@@ -255,19 +255,19 @@ func (sr *SearchResults) GetScoreDistribution() ScoreDistribution {
 // GetStatistics returns comprehensive statistics about the search results
 func (sr *SearchResults) GetStatistics() SearchStatistics {
 	stats := SearchStatistics{
-		Query:           sr.Query.GetSummary(),
-		TotalResults:    sr.TotalResults,
-		DisplayedResults: len(sr.Results),
-		ExecutionTime:   sr.ExecutionTime,
-		SearchedFiles:   sr.SearchedFiles,
-		AverageScore:    sr.GetAverageScore(),
-		HighestScore:    sr.GetHighestScore(),
-		LowestScore:     sr.GetLowestScore(),
-		ScoreDistribution: sr.GetScoreDistribution(),
-		ResultsByFile:   len(sr.GetResultsByFile()),
-		ResultsByLanguage: len(sr.GetResultsByLanguage()),
+		Query:              sr.Query.GetSummary(),
+		TotalResults:       sr.TotalResults,
+		DisplayedResults:   len(sr.Results),
+		ExecutionTime:      sr.ExecutionTime,
+		SearchedFiles:      sr.SearchedFiles,
+		AverageScore:       sr.GetAverageScore(),
+		HighestScore:       sr.GetHighestScore(),
+		LowestScore:        sr.GetLowestScore(),
+		ScoreDistribution:  sr.GetScoreDistribution(),
+		ResultsByFile:      len(sr.GetResultsByFile()),
+		ResultsByLanguage:  len(sr.GetResultsByLanguage()),
 		ResultsByMatchType: len(sr.GetResultsByMatchType()),
-		CreatedAt:       sr.CreatedAt,
+		CreatedAt:          sr.CreatedAt,
 	}
 
 	// Add file statistics

@@ -25,12 +25,12 @@ type SearchQuery struct {
 type SearchType string
 
 const (
-	SearchTypeSemantic   SearchType = "semantic"   // Vector-based semantic search
-	SearchTypeText       SearchType = "text"       // Traditional text-based search
-	SearchTypeHybrid     SearchType = "hybrid"     // Combination of semantic and text
-	SearchTypeRegex      SearchType = "regex"      // Regular expression search
-	SearchTypeExact      SearchType = "exact"      // Exact phrase match
-	SearchTypeFuzzy      SearchType = "fuzzy"      // Fuzzy string matching
+	SearchTypeSemantic SearchType = "semantic" // Vector-based semantic search
+	SearchTypeText     SearchType = "text"     // Traditional text-based search
+	SearchTypeHybrid   SearchType = "hybrid"   // Combination of semantic and text
+	SearchTypeRegex    SearchType = "regex"    // Regular expression search
+	SearchTypeExact    SearchType = "exact"    // Exact phrase match
+	SearchTypeFuzzy    SearchType = "fuzzy"    // Fuzzy string matching
 )
 
 // NewSearchQuery creates a new SearchQuery with default values
@@ -177,17 +177,17 @@ func (sq *SearchQuery) GetBoostTerms() []string {
 
 	// Look for programming-specific patterns
 	patterns := map[string]string{
-		`\b(func|function|def|method)\s+(\w+)`:     "function_definition",
-		`\b(class|struct|interface)\s+(\w+)`:       "class_definition",
-		`\b(import|include|require)\s+(\w+)`:       "import_statement",
-		`\b(var|let|const)\s+(\w+)`:               "variable_declaration",
-		`\b(return)\b`:                             "return_statement",
-		`\b(if|else|for|while|switch)\b`:           "control_flow",
-		`\b(try|catch|throw|raise)\b`:              "error_handling",
-		`\b(test|spec|mock|assert)\b`:              "testing",
-		`\b(api|endpoint|route|handler)\b`:         "api_related",
-		`\b(database|db|query|sql)\b`:              "database_related",
-		`\b(http|request|response)\b`:              "http_related",
+		`\b(func|function|def|method)\s+(\w+)`: "function_definition",
+		`\b(class|struct|interface)\s+(\w+)`:   "class_definition",
+		`\b(import|include|require)\s+(\w+)`:   "import_statement",
+		`\b(var|let|const)\s+(\w+)`:            "variable_declaration",
+		`\b(return)\b`:                         "return_statement",
+		`\b(if|else|for|while|switch)\b`:       "control_flow",
+		`\b(try|catch|throw|raise)\b`:          "error_handling",
+		`\b(test|spec|mock|assert)\b`:          "testing",
+		`\b(api|endpoint|route|handler)\b`:     "api_related",
+		`\b(database|db|query|sql)\b`:          "database_related",
+		`\b(http|request|response)\b`:          "http_related",
 	}
 
 	for pattern, termType := range patterns {
@@ -370,9 +370,9 @@ func (sq *SearchQuery) GetSummary() string {
 
 // QueryComplexity represents the complexity analysis of a search query
 type QueryComplexity struct {
-	Score      float64   `json:"score"`       // 0.0 to 1.0
-	Factors    []string  `json:"factors"`     // Complexity factors
-	Processing string    `json:"processing"`  // Processing level
+	Score      float64  `json:"score"`      // 0.0 to 1.0
+	Factors    []string `json:"factors"`    // Complexity factors
+	Processing string   `json:"processing"` // Processing level
 }
 
 // Helper functions

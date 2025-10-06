@@ -2,7 +2,7 @@
 
 # Build the CLI tool
 build:
-	go build -o bin/code-search ./src/cli/main.go
+	go build -o bin/code-search ./src
 
 # Run all tests
 test:
@@ -34,7 +34,7 @@ deps:
 
 # Install the CLI tool
 install: build
-	cp bin/code-search $(GOPATH)/bin/
+	cp bin/code-search $(shell go env GOPATH)/bin/
 
 # Development setup
 setup: deps

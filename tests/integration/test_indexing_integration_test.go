@@ -294,7 +294,7 @@ This is a test project for the code search indexing functionality.
 
 ## Usage
 
-1. Run `go run main.go`
+1. Run ` + "`go run main.go`" + `
 2. Visit http://localhost:8080
 
 ## Configuration
@@ -694,7 +694,7 @@ func Process%d%d(items []string) ([]string, error) {
 	}
 	return result, nil
 }
-`, dirName, i, j, i, j, i, j, i, j, i, j, i, j, i, j)
+`, dirName, i, j, i, j, i, j, i, j, i, j, i, j, i, j, i, j)
 
 			filePath := filepath.Join(moduleDir, fileName)
 			err = os.WriteFile(filePath, []byte(content), 0644)

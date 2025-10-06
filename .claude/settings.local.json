@@ -7,7 +7,9 @@
       "Bash(go test:*)",
       "Bash(find:*)",
       "Bash(go build:*)",
-      "Bash(./bin/code-search:*)"
+      "Bash(./bin/code-search:*)",
+      "Bash(make:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []

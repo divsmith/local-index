@@ -80,11 +80,11 @@ func (cmd *IndexCommand) Execute(args []string) error {
 	}
 
 	// Show final progress line
-	fmt.Printf("\rIndexing progress: %d/%d files (100.0%) - Complete!\n",
+	fmt.Printf("\rIndexing progress: %d/%d files (100.0%%) - Complete!\n",
 		result.FilesIndexed, result.FilesIndexed+result.FilesSkipped)
 
 	// Display results
-	if err := cmd.displayIndexResult(result, start); err != nil {
+	if err := cmd.displayIndexResult(result, start, options); err != nil {
 		return fmt.Errorf("failed to display index result: %w", err)
 	}
 
@@ -93,25 +93,25 @@ func (cmd *IndexCommand) Execute(args []string) error {
 
 // IndexOptions contains index command options
 type IndexOptions struct {
-	force          bool
-	includeHidden  bool
-	fileTypes      []string
+	force           bool
+	includeHidden   bool
+	fileTypes       []string
 	excludePatterns []string
-	maxFileSize    int64
-	verbose        bool
-	quiet          bool
+	maxFileSize     int64
+	verbose         bool
+	quiet           bool
 }
 
 // parseIndexOptions parses command line options for index
 func (cmd *IndexCommand) parseIndexOptions(args []string) (IndexOptions, error) {
 	options := IndexOptions{
-		force:          false,
-		includeHidden:  false,
-		fileTypes:      []string{"*"},
+		force:           false,
+		includeHidden:   false,
+		fileTypes:       []string{"*"},
 		excludePatterns: []string{},
-		maxFileSize:    1024 * 1024, // 1MB
-		verbose:        false,
-		quiet:          false,
+		maxFileSize:     1024 * 1024, // 1MB
+		verbose:         false,
+		quiet:           false,
 	}
 
 	for i := 0; i < len(args); i++ {
@@ -194,7 +194,7 @@ func (cmd *IndexCommand) getIndexPath(force bool) string {
 }
 
 // displayIndexResult displays the result of indexing
-func (cmd *IndexCommand) displayIndexResult(result *services.IndexingResult, start time.Time) error {
+func (cmd *IndexCommand) displayIndexResult(result *services.IndexingResult, start time.Time, options IndexOptions) error {
 	if !options.quiet {
 		fmt.Printf("\n") // New line after progress bar
 	}
@@ -315,6 +315,3 @@ func (cmd *IndexCommand) GetHelp() string {
 
 Use 'code-search index --help' for detailed usage information.`
 }
-
-// Global variable for options (temporary fix)
-var options IndexOptions

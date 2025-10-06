@@ -13,9 +13,9 @@ import (
 
 // SearchService handles search operations on indexed codebases
 type SearchService struct {
-	codeParser  CodeParser
-	vectorStore models.VectorStore
-	logger      Logger
+	codeParser    CodeParser
+	vectorStore   models.VectorStore
+	logger        Logger
 	searchOptions SearchOptions
 }
 
