@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.scripts/bash/check-prerequisites.sh:*)",
+      "Bash(mkdir:*)",
+      "Bash(go mod init:*)",
+      "Bash(go test:*)",
+      "Bash(find:*)",
+      "Bash(go build:*)",
+      "Bash(./bin/code-search:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
