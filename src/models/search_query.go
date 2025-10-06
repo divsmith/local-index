@@ -89,7 +89,8 @@ func (sq *SearchQuery) Validate() error {
 
 	// Validate file filter pattern
 	if sq.FileFilter != "" {
-		if _, err := regexp.Compile(sq.FileFilter); err != nil {
+		regexPattern := sq.globToRegex(sq.FileFilter)
+		if _, err := regexp.Compile(regexPattern); err != nil {
 			return fmt.Errorf("invalid file filter pattern: %w", err)
 		}
 	}
@@ -212,7 +213,9 @@ func (sq *SearchQuery) GetBoostTerms() []string {
 func (sq *SearchQuery) ShouldIncludeFile(filePath, language string) bool {
 	// Check file filter
 	if sq.FileFilter != "" {
-		matched, err := regexp.MatchString(sq.FileFilter, filePath)
+		// Convert glob pattern to regex
+		regexPattern := sq.globToRegex(sq.FileFilter)
+		matched, err := regexp.MatchString(regexPattern, filePath)
 		if err != nil || !matched {
 			return false
 		}
@@ -399,4 +402,34 @@ func addFuzzyMarkers(query string) string {
 	// This is a simplified implementation
 	// In a real system, you'd use proper fuzzy search algorithms
 	return "~" + query + "~"
+}
+
+// globToRegex converts a glob pattern to a regex pattern
+func (sq *SearchQuery) globToRegex(glob string) string {
+	var regex strings.Builder
+
+	// Anchor the pattern to match the full string
+	regex.WriteString("^")
+
+	for _, char := range glob {
+		switch char {
+		case '*':
+			// * matches any sequence of characters (including none)
+			regex.WriteString(".*")
+		case '?':
+			// ? matches any single character
+			regex.WriteString(".")
+		case '.', '^', '$', '+', '(', ')', '[', ']', '{', '}', '|', '\\':
+			// Escape regex special characters
+			regex.WriteString("\\")
+			regex.WriteRune(char)
+		default:
+			regex.WriteRune(char)
+		}
+	}
+
+	// Anchor the pattern to match the full string
+	regex.WriteString("$")
+
+	return regex.String()
 }

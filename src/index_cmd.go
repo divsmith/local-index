@@ -43,13 +43,13 @@ func (cmd *IndexCommand) Execute(args []string) error {
 	// Parse arguments
 	options, err := cmd.parseIndexOptions(args)
 	if err != nil {
-		return fmt.Errorf("invalid index options: %w", err)
+		return NewInvalidArgumentError("invalid index options", err)
 	}
 
 	// Get repository path (current directory by default)
 	repositoryPath, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("failed to get current directory: %w", err)
+		return NewGeneralError("failed to get current directory", err)
 	}
 
 	// Determine index path
@@ -76,7 +76,7 @@ func (cmd *IndexCommand) Execute(args []string) error {
 	)
 	if err != nil {
 		fmt.Printf("\n")
-		return fmt.Errorf("indexing failed: %w", err)
+		return NewGeneralError("indexing failed", err)
 	}
 
 	// Show final progress line
@@ -85,7 +85,7 @@ func (cmd *IndexCommand) Execute(args []string) error {
 
 	// Display results
 	if err := cmd.displayIndexResult(result, start, options); err != nil {
-		return fmt.Errorf("failed to display index result: %w", err)
+		return NewGeneralError("failed to display index result", err)
 	}
 
 	return nil
@@ -126,7 +126,7 @@ func (cmd *IndexCommand) parseIndexOptions(args []string) (IndexOptions, error) 
 
 		case "--file-types", "-t":
 			if i+1 >= len(args) {
-				return options, fmt.Errorf("--file-types requires a value")
+				return options, NewInvalidArgumentError("--file-types requires a value", nil)
 			}
 			// Split comma-separated file types
 			types := strings.Split(args[i+1], ",")
@@ -138,7 +138,7 @@ func (cmd *IndexCommand) parseIndexOptions(args []string) (IndexOptions, error) 
 
 		case "--exclude", "-e":
 			if i+1 >= len(args) {
-				return options, fmt.Errorf("--exclude requires a value")
+				return options, NewInvalidArgumentError("--exclude requires a value", nil)
 			}
 			// Split comma-separated patterns
 			patterns := strings.Split(args[i+1], ",")
@@ -150,11 +150,11 @@ func (cmd *IndexCommand) parseIndexOptions(args []string) (IndexOptions, error) 
 
 		case "--max-file-size", "-s":
 			if i+1 >= len(args) {
-				return options, fmt.Errorf("--max-file-size requires a value")
+				return options, NewInvalidArgumentError("--max-file-size requires a value", nil)
 			}
 			var size int64
 			if _, err := fmt.Sscanf(args[i+1], "%d", &size); err != nil || size <= 0 {
-				return options, fmt.Errorf("invalid max-file-size value: %s", args[i+1])
+				return options, NewInvalidArgumentError(fmt.Sprintf("invalid max-file-size value: %s", args[i+1]), nil)
 			}
 			options.maxFileSize = size
 			i++
@@ -173,7 +173,7 @@ func (cmd *IndexCommand) parseIndexOptions(args []string) (IndexOptions, error) 
 
 		default:
 			if strings.HasPrefix(arg, "-") {
-				return options, fmt.Errorf("unknown option: %s", arg)
+				return options, NewInvalidArgumentError(fmt.Sprintf("unknown option: %s", arg), nil)
 			}
 		}
 	}

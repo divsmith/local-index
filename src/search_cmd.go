@@ -15,33 +15,36 @@ import (
 // SearchCommand implements the search command
 type SearchCommand struct {
 	searchService *services.SearchService
-	logger        *services.DefaultLogger
+	logger        services.Logger
 }
 
 // NewSearchCommand creates a new search command
 func NewSearchCommand() *SearchCommand {
+	// Create a silent logger for JSON output compatibility
+	silentLogger := &services.SilentLogger{}
+
 	return &SearchCommand{
 		searchService: services.NewSearchService(
 			lib.NewSimpleCodeParser(),
 			lib.NewInMemoryVectorStore(""),
-			&services.DefaultLogger{},
+			silentLogger,
 			services.DefaultSearchOptions(),
 		),
-		logger: &services.DefaultLogger{},
+		logger: silentLogger,
 	}
 }
 
 // Execute executes the search command with the given arguments
 func (cmd *SearchCommand) Execute(args []string) error {
 	if len(args) < 1 {
-		return fmt.Errorf("search query is required")
+		return NewInvalidArgumentError("search query is required", nil)
 	}
 
 	// Parse arguments
 	queryText := args[0]
 	options, err := cmd.parseSearchOptions(args[1:])
 	if err != nil {
-		return fmt.Errorf("invalid search options: %w", err)
+		return NewInvalidArgumentError("invalid search options", err)
 	}
 
 	// Create search query
@@ -67,7 +70,11 @@ func (cmd *SearchCommand) Execute(args []string) error {
 	start := time.Now()
 	results, err := cmd.searchService.Search(query, indexPath)
 	if err != nil {
-		return fmt.Errorf("search failed: %w", err)
+		// Check if this is an index not found error
+		if strings.Contains(err.Error(), "index not found") || strings.Contains(err.Error(), "no such file") || strings.Contains(err.Error(), "not exist") {
+			return NewNotFoundError("search failed", err)
+		}
+		return NewGeneralError("search failed", err)
 	}
 
 	// Display results based on output format
@@ -114,18 +121,18 @@ func (cmd *SearchCommand) parseSearchOptions(args []string) (SearchOptions, erro
 		switch arg {
 		case "--max-results", "-m":
 			if i+1 >= len(args) {
-				return options, fmt.Errorf("--max-results requires a value")
+				return options, NewInvalidArgumentError("--max-results requires a value", nil)
 			}
 			var maxResults int
 			if _, err := fmt.Sscanf(args[i+1], "%d", &maxResults); err != nil || maxResults < 1 {
-				return options, fmt.Errorf("invalid max-results value: %s", args[i+1])
+				return options, NewInvalidArgumentError(fmt.Sprintf("invalid max-results value: %s", args[i+1]), nil)
 			}
 			options.maxResults = maxResults
 			i++
 
 		case "--file-pattern", "-f":
 			if i+1 >= len(args) {
-				return options, fmt.Errorf("--file-pattern requires a value")
+				return options, NewInvalidArgumentError("--file-pattern requires a value", nil)
 			}
 			options.filePattern = args[i+1]
 			i++
@@ -138,22 +145,22 @@ func (cmd *SearchCommand) parseSearchOptions(args []string) (SearchOptions, erro
 
 		case "--format":
 			if i+1 >= len(args) {
-				return options, fmt.Errorf("--format requires a value")
+				return options, NewInvalidArgumentError("--format requires a value", nil)
 			}
 			format := strings.ToLower(args[i+1])
 			if format != "table" && format != "json" && format != "raw" {
-				return options, fmt.Errorf("invalid format: %s (supported: table, json, raw)", format)
+				return options, NewInvalidArgumentError(fmt.Sprintf("invalid format: %s (supported: table, json, raw)", format), nil)
 			}
 			options.format = format
 			i++
 
 		case "--threshold", "-t":
 			if i+1 >= len(args) {
-				return options, fmt.Errorf("--threshold requires a value")
+				return options, NewInvalidArgumentError("--threshold requires a value", nil)
 			}
 			var threshold float64
 			if _, err := fmt.Sscanf(args[i+1], "%f", &threshold); err != nil || threshold < 0 || threshold > 1 {
-				return options, fmt.Errorf("invalid threshold value: %s (must be between 0 and 1)", args[i+1])
+				return options, NewInvalidArgumentError(fmt.Sprintf("invalid threshold value: %s (must be between 0 and 1)", args[i+1]), nil)
 			}
 			options.threshold = threshold
 			i++
@@ -173,7 +180,7 @@ func (cmd *SearchCommand) parseSearchOptions(args []string) (SearchOptions, erro
 
 		default:
 			if strings.HasPrefix(arg, "-") {
-				return options, fmt.Errorf("unknown option: %s", arg)
+				return options, NewInvalidArgumentError(fmt.Sprintf("unknown option: %s", arg), nil)
 			}
 		}
 	}
@@ -250,9 +257,9 @@ func (cmd *SearchCommand) displayJSONResults(results *models.SearchResults) erro
 	// Create a clean JSON structure for output
 	output := map[string]interface{}{
 		"query":          results.Query.QueryText,
-		"total_results":  results.TotalResults,
+		"totalResults":   results.TotalResults,
 		"displayed":      len(results.Results),
-		"execution_time": results.ExecutionTime.String(),
+		"executionTime":  results.ExecutionTime.String(),
 		"has_more":       results.HasMore,
 		"results":        results.Results,
 	}

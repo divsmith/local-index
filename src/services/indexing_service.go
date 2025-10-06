@@ -508,3 +508,26 @@ func (l *DefaultLogger) Debug(msg string, args ...interface{}) {
 func (l *DefaultLogger) Warn(msg string, args ...interface{}) {
 	log.Printf("[WARN] "+msg, args...)
 }
+
+// SilentLogger is a logger that discards all log messages
+type SilentLogger struct{}
+
+// Info discards info messages
+func (l *SilentLogger) Info(msg string, args ...interface{}) {
+	// Silent - no output
+}
+
+// Error discards error messages
+func (l *SilentLogger) Error(msg string, args ...interface{}) {
+	// Silent - no output
+}
+
+// Debug discards debug messages
+func (l *SilentLogger) Debug(msg string, args ...interface{}) {
+	// Silent - no output
+}
+
+// Warn discards warning messages
+func (l *SilentLogger) Warn(msg string, args ...interface{}) {
+	// Silent - no output
+}

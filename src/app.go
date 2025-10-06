@@ -46,7 +46,7 @@ func (cli *CLI) Run(args []string) error {
 		return nil
 
 	default:
-		return fmt.Errorf("unknown command: %s\n\nUse 'code-search help' for available commands", command)
+		return NewInvalidArgumentError(fmt.Sprintf("unknown command: %s\n\nUse 'code-search help' for available commands", command), nil)
 	}
 }
 

@@ -7,36 +7,36 @@ This guide will help you get started with the high-performance local CLI vectori
 1. Navigate to your project directory where you want to use the search tool
 2. Build the CLI tool:
    ```bash
-   go build -o code-search ./src/cli/main.go
+   go build -o bin/code-search ./src
    ```
 
 ## Basic Usage
 1. Initialize the search index in your codebase:
    ```bash
-   ./code-search index
+   ./bin/code-search index
    ```
    This will scan your current directory and subdirectories, creating a vectorized index of your code.
 
 2. Search for code patterns:
    ```bash
-   ./code-search search "authentication function"
+   ./bin/code-search search "authentication function"
    ```
    This will search your indexed codebase for code related to authentication functions.
 
 ## Advanced Usage
 1. Search with specific file filtering:
    ```bash
-   ./code-search search --file-pattern="*.go" "database query"
+   ./bin/code-search search --file-pattern "*.go" "database query"
    ```
 
 2. Limit the number of results:
    ```bash
-   ./code-search search --max-results=5 "error handling"
+   ./bin/code-search search --max-results 5 "error handling"
    ```
 
 3. Search with context included:
    ```bash
-   ./code-search search --with-context "user validation"
+   ./bin/code-search search --with-context "user validation"
    ```
 
 ## Example Workflow
@@ -47,13 +47,13 @@ This guide will help you get started with the high-performance local CLI vectori
 
 2. Index your codebase:
    ```bash
-   ./code-search index
+   ./bin/code-search index
    ```
    Expected output: "Indexing complete. Indexed X files in Y seconds."
 
 3. Search for specific functionality:
    ```bash
-   ./code-search search "calculate tax"
+   ./bin/code-search search "calculate tax"
    ```
    Expected output:
    ```

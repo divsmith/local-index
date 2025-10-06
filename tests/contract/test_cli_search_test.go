@@ -4,18 +4,20 @@ import (
 	"encoding/json"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 )
 
+
 // TestCLISearchCommand tests the contract for the CLI search command
 func TestCLISearchCommand(t *testing.T) {
-	// Create a temporary directory with test files
-	tempDir := t.TempDir()
+	// Set up test environment
+	resourceDir := setupTestEnvironment(t, "TestCLISearchCommand")
 
 	// Create test Go files with specific content
-	testFile1 := tempDir + "/calculator.go"
+	testFile1 := filepath.Join(resourceDir, "calculator.go")
 	err := os.WriteFile(testFile1, []byte(`package main
 
 import "fmt"
@@ -39,7 +41,7 @@ func main() {
 		t.Fatalf("Failed to create test file: %v", err)
 	}
 
-	testFile2 := tempDir + "/invoice.go"
+	testFile2 := filepath.Join(resourceDir, "invoice.go")
 	err = os.WriteFile(testFile2, []byte(`package main
 
 // Invoice represents a customer invoice
@@ -64,31 +66,21 @@ func (i *Invoice) CalculateTotal() {
 		t.Fatalf("Failed to create test file: %v", err)
 	}
 
-	// Change to temp directory
+	// Change to resource directory
 	oldWD, err := os.Getwd()
 	if err != nil {
 		t.Fatalf("Failed to get working directory: %v", err)
 	}
 	defer os.Chdir(oldWD)
 
-	err = os.Chdir(tempDir)
+	err = os.Chdir(resourceDir)
 	if err != nil {
-		t.Fatalf("Failed to change to temp directory: %v", err)
-	}
-
-	// Build the CLI tool
-	cmd := exec.Command("go", "build", "-o", "code-search", "../../src/cli/main.go")
-	cmd.Dir = tempDir
-	output, err := cmd.CombinedOutput()
-
-	// If build fails, skip the test
-	if err != nil {
-		t.Skipf("CLI tool not yet implemented (build failed): %v\nOutput: %s", err, string(output))
+		t.Fatalf("Failed to change to resource directory: %v", err)
 	}
 
 	// First, index the directory
-	cmd = exec.Command("./code-search", "index")
-	cmd.Dir = tempDir
+	cmd := exec.Command("./code-search", "index")
+	cmd.Dir = resourceDir
 	_, err = cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("Failed to index test directory: %v", err)
@@ -96,9 +88,9 @@ func (i *Invoice) CalculateTotal() {
 
 	// Test basic search functionality
 	cmd = exec.Command("./code-search", "search", "calculate tax")
-	cmd.Dir = tempDir
+	cmd.Dir = resourceDir
 	start := time.Now()
-	output, err = cmd.CombinedOutput()
+	output, err := cmd.CombinedOutput()
 	duration := time.Since(start)
 
 	if err != nil {
@@ -136,11 +128,11 @@ func (i *Invoice) CalculateTotal() {
 
 // TestCLISearchCommandWithMaxResults tests the --max-results flag
 func TestCLISearchCommandWithMaxResults(t *testing.T) {
-	tempDir := t.TempDir()
+	resourceDir := setupTestEnvironment(t, "TestCLISearchCommandWithMaxResults")
 
 	// Create multiple test files
 	for i := 0; i < 5; i++ {
-		testFile := tempDir + "/test.go"
+		testFile := filepath.Join(resourceDir, "test.go")
 		content := `package main
 
 func calculate() {
@@ -163,22 +155,14 @@ func validate() {
 	}
 	defer os.Chdir(oldWD)
 
-	err = os.Chdir(tempDir)
+	err = os.Chdir(resourceDir)
 	if err != nil {
-		t.Fatalf("Failed to change to temp directory: %v", err)
-	}
-
-	// Build the CLI tool
-	cmd := exec.Command("go", "build", "-o", "code-search", "../../src/cli/main.go")
-	cmd.Dir = tempDir
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Skipf("CLI tool not yet implemented: %v\nOutput: %s", err, string(output))
+		t.Fatalf("Failed to change to resource directory: %v", err)
 	}
 
 	// Index the directory
-	cmd = exec.Command("./code-search", "index")
-	cmd.Dir = tempDir
+	cmd := exec.Command("./code-search", "index")
+	cmd.Dir = resourceDir
 	_, err = cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("Failed to index test directory: %v", err)
@@ -186,8 +170,8 @@ func validate() {
 
 	// Test with max results limit
 	cmd = exec.Command("./code-search", "search", "calculate", "--max-results", "2")
-	cmd.Dir = tempDir
-	output, err = cmd.CombinedOutput()
+	cmd.Dir = resourceDir
+	output, err := cmd.CombinedOutput()
 
 	if err != nil {
 		t.Errorf("Search command with --max-results failed: %v, output: %s", err, string(output))
@@ -203,9 +187,9 @@ func validate() {
 
 // TestCLISearchCommandJSONFormat tests the --format json flag
 func TestCLISearchCommandJSONFormat(t *testing.T) {
-	tempDir := t.TempDir()
+	resourceDir := setupTestEnvironment(t, "TestCLISearchCommandJSONFormat")
 
-	testFile := tempDir + "/test.go"
+	testFile := filepath.Join(resourceDir, "test.go")
 	err := os.WriteFile(testFile, []byte(`package main
 
 func calculateTax(amount float64) float64 {
@@ -222,22 +206,14 @@ func calculateTax(amount float64) float64 {
 	}
 	defer os.Chdir(oldWD)
 
-	err = os.Chdir(tempDir)
+	err = os.Chdir(resourceDir)
 	if err != nil {
-		t.Fatalf("Failed to change to temp directory: %v", err)
-	}
-
-	// Build the CLI tool
-	cmd := exec.Command("go", "build", "-o", "code-search", "../../src/cli/main.go")
-	cmd.Dir = tempDir
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Skipf("CLI tool not yet implemented: %v\nOutput: %s", err, string(output))
+		t.Fatalf("Failed to change to resource directory: %v", err)
 	}
 
 	// Index the directory
-	cmd = exec.Command("./code-search", "index")
-	cmd.Dir = tempDir
+	cmd := exec.Command("./code-search", "index")
+	cmd.Dir = resourceDir
 	_, err = cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("Failed to index test directory: %v", err)
@@ -245,8 +221,8 @@ func calculateTax(amount float64) float64 {
 
 	// Test with JSON format
 	cmd = exec.Command("./code-search", "search", "calculate", "--format", "json")
-	cmd.Dir = tempDir
-	output, err = cmd.CombinedOutput()
+	cmd.Dir = resourceDir
+	output, err := cmd.CombinedOutput()
 
 	if err != nil {
 		t.Errorf("Search command with JSON format failed: %v, output: %s", err, string(output))
@@ -276,11 +252,11 @@ func calculateTax(amount float64) float64 {
 
 // TestCLISearchCommandFilePattern tests the --file-pattern flag
 func TestCLISearchCommandFilePattern(t *testing.T) {
-	tempDir := t.TempDir()
+	resourceDir := setupTestEnvironment(t, "TestCLISearchCommandFilePattern")
 
 	// Create different file types
-	goFile := tempDir + "/test.go"
-	jsFile := tempDir + "/test.js"
+	goFile := filepath.Join(resourceDir, "test.go")
+	jsFile := filepath.Join(resourceDir, "test.js")
 
 	err := os.WriteFile(goFile, []byte(`package main
 
@@ -294,8 +270,7 @@ func calculate() {
 
 	err = os.WriteFile(jsFile, []byte(`function calculate() {
 	// JavaScript function
-}
-`), 0644)
+}`), 0644)
 	if err != nil {
 		t.Fatalf("Failed to create JavaScript file: %v", err)
 	}
@@ -306,22 +281,14 @@ func calculate() {
 	}
 	defer os.Chdir(oldWD)
 
-	err = os.Chdir(tempDir)
+	err = os.Chdir(resourceDir)
 	if err != nil {
-		t.Fatalf("Failed to change to temp directory: %v", err)
-	}
-
-	// Build the CLI tool
-	cmd := exec.Command("go", "build", "-o", "code-search", "../../src/cli/main.go")
-	cmd.Dir = tempDir
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Skipf("CLI tool not yet implemented: %v\nOutput: %s", err, string(output))
+		t.Fatalf("Failed to change to resource directory: %v", err)
 	}
 
 	// Index the directory
-	cmd = exec.Command("./code-search", "index")
-	cmd.Dir = tempDir
+	cmd := exec.Command("./code-search", "index")
+	cmd.Dir = resourceDir
 	_, err = cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("Failed to index test directory: %v", err)
@@ -329,8 +296,8 @@ func calculate() {
 
 	// Test with file pattern filter for Go files only
 	cmd = exec.Command("./code-search", "search", "calculate", "--file-pattern", "*.go")
-	cmd.Dir = tempDir
-	output, err = cmd.CombinedOutput()
+	cmd.Dir = resourceDir
+	output, err := cmd.CombinedOutput()
 
 	if err != nil {
 		t.Errorf("Search command with --file-pattern failed: %v, output: %s", err, string(output))
@@ -351,7 +318,7 @@ func calculate() {
 
 // TestCLISearchCommandErrorHandling tests error scenarios
 func TestCLISearchCommandErrorHandling(t *testing.T) {
-	tempDir := t.TempDir()
+	resourceDir := setupTestEnvironment(t, "TestCLISearchCommandErrorHandling")
 
 	oldWD, err := os.Getwd()
 	if err != nil {
@@ -359,23 +326,15 @@ func TestCLISearchCommandErrorHandling(t *testing.T) {
 	}
 	defer os.Chdir(oldWD)
 
-	err = os.Chdir(tempDir)
+	err = os.Chdir(resourceDir)
 	if err != nil {
-		t.Fatalf("Failed to change to temp directory: %v", err)
-	}
-
-	// Build the CLI tool
-	cmd := exec.Command("go", "build", "-o", "code-search", "../../src/cli/main.go")
-	cmd.Dir = tempDir
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Skipf("CLI tool not yet implemented: %v\nOutput: %s", err, string(output))
+		t.Fatalf("Failed to change to resource directory: %v", err)
 	}
 
 	// Test search without index (should fail)
-	cmd = exec.Command("./code-search", "search", "test")
-	cmd.Dir = tempDir
-	output, err = cmd.CombinedOutput()
+	cmd := exec.Command("./code-search", "search", "test")
+	cmd.Dir = resourceDir
+	_, err = cmd.CombinedOutput()
 
 	if err == nil {
 		t.Error("Expected search command to fail without index, but it succeeded")
@@ -388,8 +347,8 @@ func TestCLISearchCommandErrorHandling(t *testing.T) {
 
 	// Test with invalid arguments
 	cmd = exec.Command("./code-search", "search", "test", "--invalid-flag")
-	cmd.Dir = tempDir
-	output, err = cmd.CombinedOutput()
+	cmd.Dir = resourceDir
+	_, err = cmd.CombinedOutput()
 
 	if err == nil {
 		t.Error("Expected search command to fail with invalid flag, but it succeeded")
@@ -402,8 +361,8 @@ func TestCLISearchCommandErrorHandling(t *testing.T) {
 
 	// Test with no query argument
 	cmd = exec.Command("./code-search", "search")
-	cmd.Dir = tempDir
-	output, err = cmd.CombinedOutput()
+	cmd.Dir = resourceDir
+	_, err = cmd.CombinedOutput()
 
 	if err == nil {
 		t.Error("Expected search command to fail without query argument, but it succeeded")
