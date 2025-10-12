@@ -1,0 +1,24 @@
+Cleanup recommendations summary:
+
+## Test Resource Optimization
+- Consolidate duplicate CLI binaries (9 copies × 4MB = ~36MB waste)
+- Remove duplicate index files in test resources  
+- Simplify contract test setup to use shared binary
+
+## Script Cleanup
+- Remove temporary fix scripts if issues resolved
+- Consolidate similar shell script functionality
+
+## Performance Optimizations
+- Leverage existing PerformanceOptimizer in lib/performance.go
+- Use BatchProcessor for memory-efficient indexing
+
+## Build/Test Efficiency  
+- Add fast test target for development
+- Add test cleanup target
+
+## Code Organization
+- Review unused imports in 585 test files
+- Consolidate common test utilities
+
+Highest impact: Consolidate CLI binaries (saves ~30MB immediately)
