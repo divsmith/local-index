@@ -76,7 +76,7 @@ func CalculateSum(a, b int) int {
 	}
 
 	// Test the index command
-	cmd := exec.Command("./code-search", "index")
+	cmd := exec.Command("../../../../bin/code-search", "index")
 	cmd.Dir = resourceDir
 	start := time.Now()
 	output, err := cmd.CombinedOutput()
@@ -143,7 +143,7 @@ func main() {
 	}
 
 	// First indexing
-	cmd := exec.Command("./code-search", "index")
+	cmd := exec.Command("../../../../bin/code-search", "index")
 	cmd.Dir = resourceDir
 	output, err := cmd.CombinedOutput()
 	if err != nil {
@@ -155,7 +155,7 @@ func main() {
 	time.Sleep(100 * time.Millisecond)
 
 	// Force re-index
-	cmd = exec.Command("./code-search", "index", "--force")
+	cmd = exec.Command("../../../../bin/code-search", "index", "--force")
 	cmd.Dir = resourceDir
 	start := time.Now()
 	output, err = cmd.CombinedOutput()
@@ -207,7 +207,7 @@ func TestCLIIndexCommandErrorHandling(t *testing.T) {
 	}
 
 	// Test with invalid arguments
-	cmd := exec.Command("./code-search", "index", "--invalid-flag")
+	cmd := exec.Command("../../../../bin/code-search", "index", "--invalid-flag")
 	cmd.Dir = resourceDir
 	output, err := cmd.CombinedOutput()
 
@@ -222,7 +222,7 @@ func TestCLIIndexCommandErrorHandling(t *testing.T) {
 	}
 
 	// Test with help flag
-	cmd = exec.Command("./code-search", "index", "--help")
+	cmd = exec.Command("../../../../bin/code-search", "index", "--help")
 	cmd.Dir = resourceDir
 	output, err = cmd.CombinedOutput()
 

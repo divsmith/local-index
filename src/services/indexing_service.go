@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -146,55 +147,47 @@ func (is *IndexingService) IndexRepository(
 
 	is.logger.Info("Found %d files to process", len(files))
 
-	// Process files
+	// Process files using BatchProcessor for memory efficiency
 	totalFiles := len(files)
 	processedFiles := 0
 
-	// Create channel for concurrent processing
-	fileChan := make(chan string, is.indexOptions.MaxConcurrency)
-	resultChan := make(chan FileProcessingResult, is.indexOptions.MaxConcurrency)
-
-	// Start worker goroutines
-	var wg sync.WaitGroup
-	for i := 0; i < is.indexOptions.MaxConcurrency; i++ {
-		wg.Add(1)
-		go is.processFileWorker(fileChan, resultChan, codeIndex, &wg)
+	// Process files in batches for memory efficiency
+	batchSize := is.indexOptions.ChunkSize // Use chunk size as batch size for files
+	if batchSize <= 0 {
+		batchSize = 100 // Default batch size
 	}
 
-	// Send files to workers
-	go func() {
-		for _, file := range files {
-			fileChan <- file
+	// Convert string file paths to FileInfo for BatchProcessor
+	var fileInfos []lib.FileInfo
+	for _, filePath := range files {
+		if info, err := os.Stat(filePath); err == nil {
+			relPath, _ := filepath.Rel(repositoryPath, filePath)
+			fileInfos = append(fileInfos, lib.FileInfo{
+				Path:         filePath,
+				Size:         info.Size(),
+				ModTime:      info.ModTime(),
+				IsDir:        false,
+				Extension:    filepath.Ext(filePath),
+				RelativePath: relPath,
+			})
 		}
-		close(fileChan)
-	}()
+	}
 
-	// Wait for all workers to finish
-	go func() {
-		wg.Wait()
-		close(resultChan)
-	}()
-
-	// Process results
-	for fileResult := range resultChan {
-		processedFiles++
-
-		if fileResult.Error != nil {
-			result.Errors = append(result.Errors, fmt.Sprintf("Failed to process %s: %v", fileResult.FilePath, fileResult.Error))
-			result.FilesSkipped++
-		} else if fileResult.Skipped {
-			result.FilesSkipped++
-			is.logger.Debug("Skipped file: %s (%s)", fileResult.FilePath, fileResult.SkipReason)
-		} else {
-			result.FilesIndexed++
-			result.ChunksCreated += fileResult.ChunkCount
-			is.logger.Debug("Processed file: %s (%d chunks)", fileResult.FilePath, fileResult.ChunkCount)
+	batchProcessor := lib.NewBatchProcessor(batchSize, func(fileBatch []lib.FileInfo) error {
+		// Convert FileInfo back to strings for processing
+		var filePaths []string
+		for _, fileInfo := range fileBatch {
+			filePaths = append(filePaths, fileInfo.Path)
 		}
 
-		// Report progress
-		if progressCallback != nil {
-			progressCallback(processedFiles, totalFiles, fileResult.FilePath)
-		}
+		// Process each batch with controlled concurrency
+		return is.processFileBatch(filePaths, codeIndex, result, &processedFiles, totalFiles, progressCallback)
+	})
+
+	// Process all files in batches
+	if err := batchProcessor.ProcessFiles(fileInfos); err != nil {
+		result.Errors = append(result.Errors, fmt.Sprintf("Batch processing failed: %v", err))
+		return result, err
 	}
 
 	// Save the index
@@ -219,6 +212,70 @@ type FileProcessingResult struct {
 	Skipped    bool
 	SkipReason string
 	ChunkCount int
+}
+
+// processFileBatch processes a batch of files with controlled concurrency
+func (is *IndexingService) processFileBatch(
+	fileBatch []string,
+	codeIndex *models.CodeIndex,
+	result *IndexingResult,
+	processedFiles *int,
+	totalFiles int,
+	progressCallback ProgressCallback,
+) error {
+	// Create channel for concurrent processing within batch
+	fileChan := make(chan string, len(fileBatch))
+	resultChan := make(chan FileProcessingResult, len(fileBatch))
+
+	// Start worker goroutines for this batch (limit concurrency to prevent memory spikes)
+	batchWorkers := is.indexOptions.MaxConcurrency
+	if batchWorkers > len(fileBatch) {
+		batchWorkers = len(fileBatch)
+	}
+
+	var wg sync.WaitGroup
+	for i := 0; i < batchWorkers; i++ {
+		wg.Add(1)
+		go is.processFileWorker(fileChan, resultChan, codeIndex, &wg)
+	}
+
+	// Send files to workers
+	go func() {
+		for _, file := range fileBatch {
+			fileChan <- file
+		}
+		close(fileChan)
+	}()
+
+	// Wait for all workers to finish
+	go func() {
+		wg.Wait()
+		close(resultChan)
+	}()
+
+	// Process results from this batch
+	for fileResult := range resultChan {
+		*processedFiles++
+
+		if fileResult.Error != nil {
+			result.Errors = append(result.Errors, fmt.Sprintf("Failed to process %s: %v", fileResult.FilePath, fileResult.Error))
+			result.FilesSkipped++
+		} else if fileResult.Skipped {
+			result.FilesSkipped++
+			is.logger.Debug("Skipped file: %s (%s)", fileResult.FilePath, fileResult.SkipReason)
+		} else {
+			result.FilesIndexed++
+			result.ChunksCreated += fileResult.ChunkCount
+			is.logger.Debug("Processed file: %s (%d chunks)", fileResult.FilePath, fileResult.ChunkCount)
+		}
+
+		// Report progress
+		if progressCallback != nil {
+			progressCallback(*processedFiles, totalFiles, fileResult.FilePath)
+		}
+	}
+
+	return nil
 }
 
 // processFileWorker processes files from the file channel

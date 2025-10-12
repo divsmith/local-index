@@ -79,7 +79,7 @@ func (i *Invoice) CalculateTotal() {
 	}
 
 	// First, index the directory
-	cmd := exec.Command("./code-search", "index")
+	cmd := exec.Command("../../../../bin/code-search", "index")
 	cmd.Dir = resourceDir
 	_, err = cmd.CombinedOutput()
 	if err != nil {
@@ -87,7 +87,7 @@ func (i *Invoice) CalculateTotal() {
 	}
 
 	// Test basic search functionality
-	cmd = exec.Command("./code-search", "search", "calculate tax")
+	cmd = exec.Command("../../../../bin/code-search", "search", "calculate tax")
 	cmd.Dir = resourceDir
 	start := time.Now()
 	output, err := cmd.CombinedOutput()
@@ -161,7 +161,7 @@ func validate() {
 	}
 
 	// Index the directory
-	cmd := exec.Command("./code-search", "index")
+	cmd := exec.Command("../../../../bin/code-search", "index")
 	cmd.Dir = resourceDir
 	_, err = cmd.CombinedOutput()
 	if err != nil {
@@ -169,7 +169,7 @@ func validate() {
 	}
 
 	// Test with max results limit
-	cmd = exec.Command("./code-search", "search", "calculate", "--max-results", "2")
+	cmd = exec.Command("../../../../bin/code-search", "search", "calculate", "--max-results", "2")
 	cmd.Dir = resourceDir
 	output, err := cmd.CombinedOutput()
 
@@ -212,7 +212,7 @@ func calculateTax(amount float64) float64 {
 	}
 
 	// Index the directory
-	cmd := exec.Command("./code-search", "index")
+	cmd := exec.Command("../../../../bin/code-search", "index")
 	cmd.Dir = resourceDir
 	_, err = cmd.CombinedOutput()
 	if err != nil {
@@ -220,7 +220,7 @@ func calculateTax(amount float64) float64 {
 	}
 
 	// Test with JSON format
-	cmd = exec.Command("./code-search", "search", "calculate", "--format", "json")
+	cmd = exec.Command("../../../../bin/code-search", "search", "calculate", "--format", "json")
 	cmd.Dir = resourceDir
 	output, err := cmd.CombinedOutput()
 
@@ -287,7 +287,7 @@ func calculate() {
 	}
 
 	// Index the directory
-	cmd := exec.Command("./code-search", "index")
+	cmd := exec.Command("../../../../bin/code-search", "index")
 	cmd.Dir = resourceDir
 	_, err = cmd.CombinedOutput()
 	if err != nil {
@@ -295,7 +295,7 @@ func calculate() {
 	}
 
 	// Test with file pattern filter for Go files only
-	cmd = exec.Command("./code-search", "search", "calculate", "--file-pattern", "*.go")
+	cmd = exec.Command("../../../../bin/code-search", "search", "calculate", "--file-pattern", "*.go")
 	cmd.Dir = resourceDir
 	output, err := cmd.CombinedOutput()
 
@@ -332,7 +332,7 @@ func TestCLISearchCommandErrorHandling(t *testing.T) {
 	}
 
 	// Test search without index (should fail)
-	cmd := exec.Command("./code-search", "search", "test")
+	cmd := exec.Command("../../../../bin/code-search", "search", "test")
 	cmd.Dir = resourceDir
 	_, err = cmd.CombinedOutput()
 
@@ -346,7 +346,7 @@ func TestCLISearchCommandErrorHandling(t *testing.T) {
 	}
 
 	// Test with invalid arguments
-	cmd = exec.Command("./code-search", "search", "test", "--invalid-flag")
+	cmd = exec.Command("../../../../bin/code-search", "search", "test", "--invalid-flag")
 	cmd.Dir = resourceDir
 	_, err = cmd.CombinedOutput()
 
@@ -360,7 +360,7 @@ func TestCLISearchCommandErrorHandling(t *testing.T) {
 	}
 
 	// Test with no query argument
-	cmd = exec.Command("./code-search", "search")
+	cmd = exec.Command("../../../../bin/code-search", "search")
 	cmd.Dir = resourceDir
 	_, err = cmd.CombinedOutput()
 

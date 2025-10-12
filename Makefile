@@ -1,4 +1,4 @@
-.PHONY: build test lint fmt clean install
+.PHONY: build test test-fast test-clean lint fmt clean install
 
 # Build the CLI tool
 build:
@@ -7,6 +7,18 @@ build:
 # Run all tests
 test:
 	go test -v ./src/... ./tests/unit/ ./tests/contract/
+
+# Run fast tests for development (skip integration tests)
+test-fast:
+	go test -v ./src/... ./tests/unit/ ./tests/contract/ -short
+
+# Clean up test artifacts
+test-clean:
+	@echo "Cleaning up test artifacts..."
+	@find ./tests -name ".code-search-index*" -type f -delete 2>/dev/null || true
+	@rm -rf ./tests/contract/resources/*/tmp* 2>/dev/null || true
+	@rm -rf ./tests/integration/resources/*/tmp* 2>/dev/null || true
+	@echo "Test artifacts cleaned up"
 
 # Run tests with coverage
 test-coverage:

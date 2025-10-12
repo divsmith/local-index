@@ -2,7 +2,6 @@ package module_36
 
 import (
 	"fmt"
-	"time"
 )
 
 // Function360 performs some operation
@@ -28,11 +27,11 @@ func Process360(items []string) ([]string, error) {
 	var result []string
 	for i, item := range items {
 		if Validate360(item) {
-			processed, err := Function360(item)
+			err := Function360(item)
 			if err != nil {
 				return nil, err
 			}
-			result = append(result, fmt.Sprintf("%d: %s", i, processed))
+			result = append(result, fmt.Sprintf("%d: %s", i, item))
 		}
 	}
 	return result, nil

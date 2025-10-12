@@ -2,7 +2,6 @@ package module_53
 
 import (
 	"fmt"
-	"time"
 )
 
 // Function531 performs some operation
@@ -28,11 +27,11 @@ func Process531(items []string) ([]string, error) {
 	var result []string
 	for i, item := range items {
 		if Validate531(item) {
-			processed, err := Function531(item)
+			err := Function531(item)
 			if err != nil {
 				return nil, err
 			}
-			result = append(result, fmt.Sprintf("%d: %s", i, processed))
+			result = append(result, fmt.Sprintf("%d: %s", i, item))
 		}
 	}
 	return result, nil

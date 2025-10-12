@@ -198,7 +198,7 @@ func LogError(message string, err error) {
 
 	// Test 1: Index the project
 	t.Run("IndexProject", func(t *testing.T) {
-		cmd := exec.Command("./code-search", "index")
+		cmd := exec.Command("../../../../bin/code-search", "index")
 		cmd.Dir = resourceDir
 		start := time.Now()
 		output, err := cmd.CombinedOutput()
@@ -228,7 +228,7 @@ func LogError(message string, err error) {
 
 	// Test 2: Search for user validation functionality
 	t.Run("SearchUserValidation", func(t *testing.T) {
-		cmd := exec.Command("./code-search", "search", "ValidateUser")
+		cmd := exec.Command("../../../../bin/code-search", "search", "ValidateUser")
 		cmd.Dir = resourceDir
 		start := time.Now()
 		output, err := cmd.CombinedOutput()
@@ -265,7 +265,7 @@ func LogError(message string, err error) {
 
 	// Test 3: Search for payment processing
 	t.Run("SearchPaymentProcessing", func(t *testing.T) {
-		cmd := exec.Command("./code-search", "search", "ProcessPayment")
+		cmd := exec.Command("../../../../bin/code-search", "search", "ProcessPayment")
 		cmd.Dir = resourceDir
 		start := time.Now()
 		output, err := cmd.CombinedOutput()
@@ -292,7 +292,7 @@ func LogError(message string, err error) {
 
 	// Test 4: Search with file pattern filtering
 	t.Run("SearchWithFilePattern", func(t *testing.T) {
-		cmd := exec.Command("./code-search", "search", "validateAmount", "--file-pattern", "*.go")
+		cmd := exec.Command("../../../../bin/code-search", "search", "validateAmount", "--file-pattern", "*.go")
 		cmd.Dir = resourceDir
 		output, err := cmd.CombinedOutput()
 
@@ -314,7 +314,7 @@ func LogError(message string, err error) {
 
 	// Test 5: Search with max results limit
 	t.Run("SearchWithMaxResults", func(t *testing.T) {
-		cmd := exec.Command("./code-search", "search", "func", "--max-results", "3")
+		cmd := exec.Command("../../../../bin/code-search", "search", "func", "--max-results", "3")
 		cmd.Dir = resourceDir
 		output, err := cmd.CombinedOutput()
 
@@ -332,7 +332,7 @@ func LogError(message string, err error) {
 
 	// Test 6: Search with context
 	t.Run("SearchWithContext", func(t *testing.T) {
-		cmd := exec.Command("./code-search", "search", "GenerateRandomString", "--with-context")
+		cmd := exec.Command("../../../../bin/code-search", "search", "GenerateRandomString", "--with-context")
 		cmd.Dir = resourceDir
 		output, err := cmd.CombinedOutput()
 
@@ -355,7 +355,7 @@ func LogError(message string, err error) {
 
 	// Test 7: Search for non-existent content
 	t.Run("SearchNonExistent", func(t *testing.T) {
-		cmd := exec.Command("./code-search", "search", "nonexistent_function_xyz")
+		cmd := exec.Command("../../../../bin/code-search", "search", "nonexistent_function_xyz")
 		cmd.Dir = resourceDir
 		output, err := cmd.CombinedOutput()
 
@@ -421,7 +421,7 @@ func Process%d(items []string) error {
 	}
 
 	// Index the codebase
-	cmd := exec.Command("./code-search", "index")
+	cmd := exec.Command("../../../../bin/code-search", "index")
 	cmd.Dir = resourceDir
 	_, err = cmd.CombinedOutput()
 	if err != nil {
@@ -438,7 +438,7 @@ func Process%d(items []string) error {
 
 	for _, query := range queries {
 		t.Run(fmt.Sprintf("PerformanceTest_%s", query), func(t *testing.T) {
-			cmd := exec.Command("./code-search", "search", query)
+			cmd := exec.Command("../../../../bin/code-search", "search", query)
 			cmd.Dir = resourceDir
 			start := time.Now()
 			output, err := cmd.CombinedOutput()

@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	utils "code-search/tests/common"
 )
 
 // TestCLI_Run tests basic CLI functionality
@@ -326,21 +328,7 @@ func TestCLI_ConfigurationScenarios(t *testing.T) {
 
 // Helper functions for CLI testing
 func createTestDirectory(t *testing.T, name string, files map[string]string) string {
-	tempDir := t.TempDir()
-
-	testDir := filepath.Join(tempDir, name)
-	if err := os.MkdirAll(testDir, 0755); err != nil {
-		t.Fatalf("Failed to create test directory: %v", err)
-	}
-
-	for filename, content := range files {
-		filePath := filepath.Join(testDir, filename)
-		if err := os.WriteFile(filePath, []byte(content), 0644); err != nil {
-			t.Fatalf("Failed to create test file %s: %v", filename, err)
-		}
-	}
-
-	return testDir
+	return utils.CreateTestDirectory(t, name, files)
 }
 
 func runCLICommand(args []string) (string, error) {

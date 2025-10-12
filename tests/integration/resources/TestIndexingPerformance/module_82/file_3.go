@@ -2,7 +2,6 @@ package module_82
 
 import (
 	"fmt"
-	"time"
 )
 
 // Function823 performs some operation
@@ -28,11 +27,11 @@ func Process823(items []string) ([]string, error) {
 	var result []string
 	for i, item := range items {
 		if Validate823(item) {
-			processed, err := Function823(item)
+			err := Function823(item)
 			if err != nil {
 				return nil, err
 			}
-			result = append(result, fmt.Sprintf("%d: %s", i, processed))
+			result = append(result, fmt.Sprintf("%d: %s", i, item))
 		}
 	}
 	return result, nil

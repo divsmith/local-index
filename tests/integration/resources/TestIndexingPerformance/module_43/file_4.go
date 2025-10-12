@@ -2,7 +2,6 @@ package module_43
 
 import (
 	"fmt"
-	"time"
 )
 
 // Function434 performs some operation
@@ -28,11 +27,11 @@ func Process434(items []string) ([]string, error) {
 	var result []string
 	for i, item := range items {
 		if Validate434(item) {
-			processed, err := Function434(item)
+			err := Function434(item)
 			if err != nil {
 				return nil, err
 			}
-			result = append(result, fmt.Sprintf("%d: %s", i, processed))
+			result = append(result, fmt.Sprintf("%d: %s", i, item))
 		}
 	}
 	return result, nil

@@ -339,7 +339,7 @@ See config/config.go for configuration options.
 
 	// Test 1: Basic indexing
 	t.Run("BasicIndexing", func(t *testing.T) {
-		cmd := exec.Command("./code-search", "index")
+		cmd := exec.Command("../../../../bin/code-search", "index")
 		cmd.Dir = resourceDir
 		start := time.Now()
 		output, err := cmd.CombinedOutput()
@@ -399,7 +399,7 @@ See config/config.go for configuration options.
 		// Remove existing test index if it exists
 		os.Remove(indexFile)
 
-		cmd := exec.Command("./code-search", "index", "--force")
+		cmd := exec.Command("../../../../bin/code-search", "index", "--force")
 		cmd.Dir = resourceDir
 		start := time.Now()
 		output, err := cmd.CombinedOutput()
@@ -452,7 +452,7 @@ func NewFunction() {
 		}
 
 		// Run indexing again
-		cmd := exec.Command("./code-search", "index")
+		cmd := exec.Command("../../../../bin/code-search", "index")
 		cmd.Dir = resourceDir
 		start := time.Now()
 		output, err := cmd.CombinedOutput()
@@ -549,7 +549,7 @@ if __name__ == "__main__":
 		}
 
 		// Force re-index to include new files
-		cmd := exec.Command("./code-search", "index", "--force")
+		cmd := exec.Command("../../../../bin/code-search", "index", "--force")
 		cmd.Dir = resourceDir
 		output, err := cmd.CombinedOutput()
 
@@ -598,7 +598,7 @@ DEBUG=true
 		}
 
 		// Index without including hidden files (default behavior)
-		cmd := exec.Command("./code-search", "index", "--force")
+		cmd := exec.Command("../../../../bin/code-search", "index", "--force")
 		cmd.Dir = resourceDir
 		output, err := cmd.CombinedOutput()
 
@@ -612,7 +612,7 @@ DEBUG=true
 		}
 
 		// Index with hidden files included
-		cmd = exec.Command("./code-search", "index", "--force", "--include-hidden")
+		cmd = exec.Command("../../../../bin/code-search", "index", "--force", "--include-hidden")
 		cmd.Dir = resourceDir
 		output, err = cmd.CombinedOutput()
 
@@ -645,7 +645,7 @@ func thisShouldNotBeIndexed() {
 		}
 
 		// Index should handle the error gracefully
-		cmd := exec.Command("./code-search", "index", "--force")
+		cmd := exec.Command("../../../../bin/code-search", "index", "--force")
 		cmd.Dir = resourceDir
 		output, err := cmd.CombinedOutput()
 
@@ -738,7 +738,7 @@ func Process%d%d(items []string) ([]string, error) {
 
 	// Test indexing performance
 	t.Run("LargeCodebaseIndexing", func(t *testing.T) {
-		cmd := exec.Command("./code-search", "index")
+		cmd := exec.Command("../../../../bin/code-search", "index")
 		cmd.Dir = resourceDir
 		start := time.Now()
 		output, err := cmd.CombinedOutput()

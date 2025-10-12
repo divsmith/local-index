@@ -2,7 +2,6 @@ package module_50
 
 import (
 	"fmt"
-	"time"
 )
 
 // Function500 performs some operation
@@ -28,11 +27,11 @@ func Process500(items []string) ([]string, error) {
 	var result []string
 	for i, item := range items {
 		if Validate500(item) {
-			processed, err := Function500(item)
+			err := Function500(item)
 			if err != nil {
 				return nil, err
 			}
-			result = append(result, fmt.Sprintf("%d: %s", i, processed))
+			result = append(result, fmt.Sprintf("%d: %s", i, item))
 		}
 	}
 	return result, nil
