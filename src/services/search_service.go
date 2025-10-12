@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"code-search/src/models"
+	"code-search/src/lib"
 )
 
 // SearchService handles search operations on indexed codebases
@@ -658,4 +659,161 @@ func (ss *SearchService) getLineContext(lines []string, lineIndex, contextLines 
 	}
 
 	return strings.Join(contextLines_slice, "\n")
+}
+
+// SearchInDirectory searches within a specific directory
+func (ss *SearchService) SearchInDirectory(
+	query *models.SearchQuery,
+	directoryPath string,
+) (*models.SearchResults, error) {
+	fileUtils := lib.NewFileUtilities()
+
+	// Resolve path
+	resolvedPath, err := fileUtils.ResolvePath(directoryPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve directory path: %w", err)
+	}
+
+	// Create index location
+	indexLocation := fileUtils.CreateIndexLocation(resolvedPath)
+
+	// Check if index exists
+	if !fileUtils.DirectoryExists(indexLocation.IndexDir) {
+		return nil, fmt.Errorf("no index found in directory '%s'", resolvedPath)
+	}
+
+	// Check if locked
+	if fileUtils.IsLocked(indexLocation.LockFile) {
+		return nil, fmt.Errorf("directory '%s' is currently being indexed", resolvedPath)
+	}
+
+	// Validate directory
+	if !fileUtils.DirectoryExists(resolvedPath) {
+		return nil, fmt.Errorf("directory '%s' does not exist", resolvedPath)
+	}
+
+	ss.logger.Info("Searching in directory: %s", resolvedPath)
+
+	// Perform search using existing search logic
+	results, err := ss.Search(query, indexLocation.DataFile)
+	if err != nil {
+		return nil, fmt.Errorf("search failed in directory '%s': %w", resolvedPath, err)
+	}
+
+	// Set directory-specific metadata
+	results.AddMetadata("directory", resolvedPath)
+	results.AddMetadata("index_location", indexLocation.IndexDir)
+
+	return results, nil
+}
+
+// ValidateDirectoryForSearching validates a directory for searching
+func (ss *SearchService) ValidateDirectoryForSearching(directoryPath string) (*models.DirectoryConfig, error) {
+	fileUtils := lib.NewFileUtilities()
+
+	// Resolve path
+	resolvedPath, err := fileUtils.ResolvePath(directoryPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve directory path: %w", err)
+	}
+
+	// Create index location
+	indexLocation := fileUtils.CreateIndexLocation(resolvedPath)
+
+	// Check if index exists
+	if !fileUtils.DirectoryExists(indexLocation.IndexDir) {
+		return nil, fmt.Errorf("no index found in directory '%s'", resolvedPath)
+	}
+
+	// Validate directory
+	validator := lib.NewDirectoryValidator()
+	config, err := validator.ValidateDirectory(resolvedPath)
+	if err != nil {
+		return nil, fmt.Errorf("directory validation failed: %w", err)
+	}
+
+	return config, nil
+}
+
+// GetDirectorySearchCapabilities returns search capabilities for a directory
+func (ss *SearchService) GetDirectorySearchCapabilities(directoryPath string) (*DirectorySearchCapabilities, error) {
+	fileUtils := lib.NewFileUtilities()
+
+	// Resolve path
+	resolvedPath, err := fileUtils.ResolvePath(directoryPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve directory path: %w", err)
+	}
+
+	// Create index location
+	indexLocation := fileUtils.CreateIndexLocation(resolvedPath)
+
+	// Check if index exists
+	if !fileUtils.DirectoryExists(indexLocation.IndexDir) {
+		return &DirectorySearchCapabilities{
+			Exists:    false,
+			Directory: resolvedPath,
+			Message:   "No index found - directory must be indexed first",
+		}, nil
+	}
+
+	// Load index to get capabilities
+	index, err := ss.loadIndex(indexLocation.DataFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load index: %w", err)
+	}
+	defer index.Close()
+
+	// Get index statistics
+	stats := index.GetStats()
+
+	// Load directory metadata
+	metadata := &models.DirectoryMetadata{}
+	if fileUtils.FileExists(indexLocation.MetadataFile) {
+		metadataBytes, err := os.ReadFile(indexLocation.MetadataFile)
+		if err == nil {
+			metadata.FromJSON(metadataBytes)
+		}
+	}
+
+	return &DirectorySearchCapabilities{
+		Exists:         true,
+		Directory:      resolvedPath,
+		IndexLocation:  indexLocation,
+		FileCount:      stats.TotalFiles,
+		ChunkCount:     stats.TotalChunks,
+		LastIndexed:    metadata.LastIndexed,
+		IndexVersion:   metadata.IndexVersion,
+		TotalSize:      metadata.TotalSize,
+		FileTypes:      stats.FileTypes,
+		SupportedTypes: ss.getSupportedSearchTypes(),
+		Message:        "Directory is ready for searching",
+	}, nil
+}
+
+// getSupportedSearchTypes returns the list of supported search types
+func (ss *SearchService) getSupportedSearchTypes() []string {
+	return []string{
+		string(models.SearchTypeSemantic),
+		string(models.SearchTypeText),
+		string(models.SearchTypeHybrid),
+		string(models.SearchTypeRegex),
+		string(models.SearchTypeExact),
+		string(models.SearchTypeFuzzy),
+	}
+}
+
+// DirectorySearchCapabilities contains information about a directory's search capabilities
+type DirectorySearchCapabilities struct {
+	Exists         bool                         `json:"exists"`
+	Directory      string                       `json:"directory"`
+	IndexLocation  *models.IndexLocation        `json:"index_location,omitempty"`
+	FileCount      int                          `json:"file_count"`
+	ChunkCount     int                          `json:"chunk_count"`
+	LastIndexed    time.Time                    `json:"last_indexed"`
+	IndexVersion   string                       `json:"index_version"`
+	TotalSize      int64                        `json:"total_size"`
+	FileTypes      map[string]int               `json:"file_types"`
+	SupportedTypes []string                     `json:"supported_types"`
+	Message        string                       `json:"message"`
 }

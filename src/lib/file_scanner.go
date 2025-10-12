@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"code-search/src/services"
+	"code-search/src/models"
 )
 
 // FileSystemScanner implements the FileScanner interface
@@ -38,7 +38,7 @@ func NewFileSystemScanner() *FileSystemScanner {
 }
 
 // ScanFiles scans files in the given directory according to options
-func (fs *FileSystemScanner) ScanFiles(rootPath string, options services.IndexingOptions) ([]string, error) {
+func (fs *FileSystemScanner) ScanFiles(rootPath string, options models.IndexingOptions) ([]string, error) {
 	var files []string
 
 	err := filepath.Walk(rootPath, func(path string, info os.FileInfo, err error) error {
@@ -79,16 +79,16 @@ func (fs *FileSystemScanner) ScanFiles(rootPath string, options services.Indexin
 }
 
 // GetFileStats returns statistics about a file
-func (fs *FileSystemScanner) GetFileStats(filePath string) (services.FileStats, error) {
+func (fs *FileSystemScanner) GetFileStats(filePath string) (models.FileStats, error) {
 	info, err := os.Stat(filePath)
 	if err != nil {
-		return services.FileStats{}, err
+		return models.FileStats{}, err
 	}
 
 	// Detect language
 	language := fs.detectLanguage(filePath)
 
-	return services.FileStats{
+	return models.FileStats{
 		Path:         filePath,
 		Size:         info.Size(),
 		ModifiedTime: info.ModTime(),

@@ -72,3 +72,77 @@ func IsNotFoundError(err error) bool {
 	}
 	return false
 }
+
+// Directory-specific error constructors
+
+// NewDirectoryNotFoundError creates a new directory not found error
+func NewDirectoryNotFoundError(path string) *CLIError {
+	return &CLIError{
+		Code:    ExitCodeNotFound,
+		Message: fmt.Sprintf("Directory '%s' does not exist", path),
+		Err:     nil,
+	}
+}
+
+// NewPermissionDeniedError creates a new permission denied error
+func NewPermissionDeniedError(path string, operation string) *CLIError {
+	return &CLIError{
+		Code:    ExitCodeError,
+		Message: fmt.Sprintf("Permission denied accessing '%s' for %s", path, operation),
+		Err:     nil,
+	}
+}
+
+// NewDirectoryTooLargeError creates a new directory size limit error
+func NewDirectoryTooLargeError(path string, size string, limit string) *CLIError {
+	return &CLIError{
+		Code:    ExitCodeError,
+		Message: fmt.Sprintf("Directory '%s' (%s) exceeds size limit (%s)", path, size, limit),
+		Err:     nil,
+	}
+}
+
+// NewTooManyFilesError creates a new file count limit error
+func NewTooManyFilesError(path string, count int, limit int) *CLIError {
+	return &CLIError{
+		Code:    ExitCodeError,
+		Message: fmt.Sprintf("Directory '%s' contains %d files, limit is %d", path, count, limit),
+		Err:     nil,
+	}
+}
+
+// NewIndexNotFoundError creates a new index not found error
+func NewIndexNotFoundError(path string) *CLIError {
+	return &CLIError{
+		Code:    ExitCodeNotFound,
+		Message: fmt.Sprintf("No index found in directory '%s'", path),
+		Err:     nil,
+	}
+}
+
+// NewIndexCorruptedError creates a new index corrupted error
+func NewIndexCorruptedError(path string) *CLIError {
+	return &CLIError{
+		Code:    ExitCodeError,
+		Message: fmt.Sprintf("Index files are corrupted or invalid in directory '%s'", path),
+		Err:     nil,
+	}
+}
+
+// NewIndexLockedError creates a new index locked error
+func NewIndexLockedError(path string) *CLIError {
+	return &CLIError{
+		Code:    ExitCodeError,
+		Message: fmt.Sprintf("Directory '%s' is currently being indexed by another process", path),
+		Err:     nil,
+	}
+}
+
+// NewPathTraversalError creates a new path traversal error
+func NewPathTraversalError(path string) *CLIError {
+	return &CLIError{
+		Code:    ExitCodeInvalid,
+		Message: fmt.Sprintf("Path traversal detected: '%s'", path),
+		Err:     nil,
+	}
+}

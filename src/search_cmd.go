@@ -16,6 +16,7 @@ import (
 type SearchCommand struct {
 	searchService *services.SearchService
 	logger        services.Logger
+	fileUtils     *lib.FileUtilities
 }
 
 // NewSearchCommand creates a new search command
@@ -30,7 +31,8 @@ func NewSearchCommand() *SearchCommand {
 			silentLogger,
 			services.DefaultSearchOptions(),
 		),
-		logger: silentLogger,
+		logger:    silentLogger,
+		fileUtils: lib.NewFileUtilities(),
 	}
 }
 
@@ -63,12 +65,39 @@ func (cmd *SearchCommand) Execute(args []string) error {
 		query.SearchType = models.SearchTypeFuzzy
 	}
 
-	// Determine index path
-	indexPath := cmd.getIndexPath(options.force)
+	// Determine target directory for locking
+	targetDir := options.directory
+	if targetDir == "" {
+		targetDir, err = os.Getwd()
+		if err != nil {
+			return NewGeneralError("failed to get current directory", err)
+		}
+	}
 
-	// Perform search
+	// Acquire file lock for search (shared lock for read access)
+	lockFile, err := cmd.fileUtils.AcquireSharedLock(targetDir)
+	if err != nil {
+		return NewGeneralError("failed to acquire search lock", err)
+	}
+	defer cmd.fileUtils.ReleaseLock(lockFile)
+
+	// Perform search based on whether directory is specified
 	start := time.Now()
-	results, err := cmd.searchService.Search(query, indexPath)
+	var results *models.SearchResults
+
+	if options.directory != "" {
+		// Search in specified directory - resolve index location
+		indexPath, err := cmd.fileUtils.GetIndexLocation(options.directory)
+		if err != nil {
+			return NewInvalidArgumentError("failed to resolve index location", err)
+		}
+		results, err = cmd.searchService.Search(query, indexPath)
+	} else {
+		// Search current directory (backward compatibility)
+		indexPath := cmd.getIndexPath(options.force)
+		results, err = cmd.searchService.Search(query, indexPath)
+	}
+
 	if err != nil {
 		// Check if this is an index not found error
 		if strings.Contains(err.Error(), "index not found") || strings.Contains(err.Error(), "no such file") || strings.Contains(err.Error(), "not exist") {
@@ -99,6 +128,7 @@ type SearchOptions struct {
 	semantic    bool
 	exact       bool
 	fuzzy       bool
+	directory   string
 }
 
 // parseSearchOptions parses command line options for search
@@ -173,6 +203,13 @@ func (cmd *SearchCommand) parseSearchOptions(args []string) (SearchOptions, erro
 
 		case "--fuzzy", "-z":
 			options.fuzzy = true
+
+		case "--dir", "-d":
+			if i+1 >= len(args) {
+				return options, NewInvalidArgumentError("--dir requires a directory path", nil)
+			}
+			options.directory = args[i+1]
+			i++
 
 		case "--help", "-h":
 			cmd.printSearchHelp()
@@ -293,6 +330,7 @@ Options:
   -f, --file-pattern <p>   Filter results by file pattern (e.g., "*.go")
   -c, --with-context       Include code context in results
   -F, --force              Force search (use test index)
+  -d, --dir <directory>     Specify directory to search (default: current directory)
       --format <fmt>       Output format: table, json, raw (default: table)
   -t, --threshold <t>      Similarity threshold (0.0-1.0, default: 0.7)
   -s, --semantic          Use semantic search
@@ -305,6 +343,9 @@ Examples:
   code-search search "calculate tax" --file-pattern "*.go" --max-results 5
   code-search search "database query" --with-context --format json
   code-search search "function.*error" --semantic --threshold 0.8
+  code-search search "TODO" --dir /path/to/my-project
+  code-search search "class.*Controller" --dir ../sibling-project --format json
+  code-search search "import.*react" --dir ~/frontend --max-results 10
 
 Output Formats:
   table    Human-readable table format (default)
@@ -326,7 +367,7 @@ Exit Codes:
 
 // GetHelp returns help text for the search command
 func (cmd *SearchCommand) GetHelp() string {
-	return `search <query> [options] - Search the indexed codebase
+	return `search <query> [options] - Search the current directory or specified directory
 
 Use 'code-search search --help' for detailed usage information.`
 }

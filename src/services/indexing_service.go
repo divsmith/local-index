@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"code-search/src/models"
+	"code-search/src/lib"
 )
 
 // IndexingService handles codebase indexing operations
@@ -17,26 +18,13 @@ type IndexingService struct {
 	codeParser   CodeParser
 	vectorStore  models.VectorStore
 	logger       Logger
-	indexOptions IndexingOptions
+	indexOptions models.IndexingOptions
 	mu           sync.RWMutex
 }
 
-// IndexingOptions contains options for the indexing process
-type IndexingOptions struct {
-	IncludeHidden     bool          `json:"include_hidden"`
-	FileTypes         []string      `json:"file_types"`
-	ExcludePatterns   []string      `json:"exclude_patterns"`
-	MaxFileSize       int64         `json:"max_file_size"`
-	ChunkSize         int           `json:"chunk_size"`
-	ChunkOverlap      int           `json:"chunk_overlap"`
-	MaxConcurrency    int           `json:"max_concurrency"`
-	Timeout           time.Duration `json:"timeout"`
-	EnableIncremental bool          `json:"enable_incremental"`
-}
-
 // DefaultIndexingOptions returns default indexing options
-func DefaultIndexingOptions() IndexingOptions {
-	return IndexingOptions{
+func DefaultIndexingOptions() models.IndexingOptions {
+	return models.IndexingOptions{
 		IncludeHidden:     false,
 		FileTypes:         []string{"*"}, // All supported types
 		ExcludePatterns:   []string{"*.tmp", "*.log", "node_modules/*", ".git/*"},
@@ -59,8 +47,8 @@ type Logger interface {
 
 // FileScanner interface for scanning files
 type FileScanner interface {
-	ScanFiles(rootPath string, options IndexingOptions) ([]string, error)
-	GetFileStats(filePath string) (FileStats, error)
+	ScanFiles(rootPath string, options models.IndexingOptions) ([]string, error)
+	GetFileStats(filePath string) (models.FileStats, error)
 }
 
 // CodeParser interface for parsing code
@@ -70,14 +58,6 @@ type CodeParser interface {
 	GetSupportedFileTypes() []string
 }
 
-// FileStats contains file statistics
-type FileStats struct {
-	Path         string    `json:"path"`
-	Size         int64     `json:"size"`
-	ModifiedTime time.Time `json:"modified_time"`
-	IsDir        bool      `json:"is_dir"`
-	Language     string    `json:"language"`
-}
 
 // ProgressCallback is called during indexing to report progress
 type ProgressCallback func(current, total int, filePath string)
@@ -100,7 +80,7 @@ func NewIndexingService(
 	codeParser CodeParser,
 	vectorStore models.VectorStore,
 	logger Logger,
-	options IndexingOptions,
+	options models.IndexingOptions,
 ) *IndexingService {
 	return &IndexingService{
 		fileScanner:  fileScanner,
@@ -460,6 +440,159 @@ func (is *IndexingService) GetIndexingStatus(indexPath string) (*IndexingStatus,
 	}, nil
 }
 
+// IndexDirectory indexes a specific directory with validation
+func (is *IndexingService) IndexDirectory(
+	directoryPath string,
+	forceReindex bool,
+	progressCallback ProgressCallback,
+) (*IndexingResult, error) {
+	// Validate directory configuration
+	validator := lib.NewDirectoryValidator()
+	fileUtils := lib.NewFileUtilities()
+
+	// Resolve path
+	resolvedPath, err := fileUtils.ResolvePath(directoryPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve directory path: %w", err)
+	}
+
+	// Validate directory
+	config, err := validator.ValidateDirectory(resolvedPath)
+	if err != nil {
+		return nil, fmt.Errorf("directory validation failed: %w", err)
+	}
+
+	// Create index location
+	indexLocation := fileUtils.CreateIndexLocation(config.Path)
+
+	// Check if directory is locked
+	if fileUtils.IsLocked(indexLocation.LockFile) {
+		return nil, fmt.Errorf("directory '%s' is currently being indexed by another process", config.Path)
+	}
+
+	// Acquire lock
+	lockFile, err := fileUtils.AcquireLock(indexLocation.LockFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to acquire lock for directory '%s': %w", config.Path, err)
+	}
+	defer fileUtils.ReleaseLock(lockFile)
+
+	// Ensure index directory exists
+	if err := fileUtils.EnsureDirectory(indexLocation.IndexDir); err != nil {
+		return nil, fmt.Errorf("failed to create index directory: %w", err)
+	}
+
+	is.logger.Info("Starting directory indexing for: %s", config.Path)
+
+	// Update directory metadata
+	config.Metadata.MarkIndexed()
+
+	// Save directory metadata
+	metadataBytes, err := config.Metadata.ToJSON()
+	if err != nil {
+		return nil, fmt.Errorf("failed to serialize directory metadata: %w", err)
+	}
+
+	if err := os.WriteFile(indexLocation.MetadataFile, metadataBytes, 0644); err != nil {
+		return nil, fmt.Errorf("failed to save directory metadata: %w", err)
+	}
+
+	// Index the directory using existing repository indexing logic
+	result, err := is.IndexRepository(config.Path, indexLocation.DataFile, forceReindex, progressCallback)
+	if err != nil {
+		return result, err
+	}
+
+	// Update result with directory-specific information
+	result.RepositoryPath = config.Path
+	result.IndexPath = indexLocation.IndexDir
+
+	is.logger.Info("Directory indexing completed successfully for: %s", config.Path)
+	return result, nil
+}
+
+// ValidateDirectoryForIndexing validates a directory for indexing
+func (is *IndexingService) ValidateDirectoryForIndexing(directoryPath string) (*models.DirectoryConfig, error) {
+	validator := lib.NewDirectoryValidator()
+	fileUtils := lib.NewFileUtilities()
+
+	// Resolve path
+	resolvedPath, err := fileUtils.ResolvePath(directoryPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve directory path: %w", err)
+	}
+
+	// Validate directory
+	config, err := validator.ValidateDirectory(resolvedPath)
+	if err != nil {
+		return nil, fmt.Errorf("directory validation failed: %w", err)
+	}
+
+	return config, nil
+}
+
+// GetDirectoryIndexStatus returns the index status for a specific directory
+func (is *IndexingService) GetDirectoryIndexStatus(directoryPath string) (*DirectoryIndexStatus, error) {
+	fileUtils := lib.NewFileUtilities()
+
+	// Resolve path
+	resolvedPath, err := fileUtils.ResolvePath(directoryPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve directory path: %w", err)
+	}
+
+	// Create index location
+	indexLocation := fileUtils.CreateIndexLocation(resolvedPath)
+
+	// Check if index directory exists
+	if !fileUtils.DirectoryExists(indexLocation.IndexDir) {
+		return &DirectoryIndexStatus{
+			Exists:    false,
+			Directory: resolvedPath,
+			Message:   "No index found in directory",
+		}, nil
+	}
+
+	// Check if locked
+	if fileUtils.IsLocked(indexLocation.LockFile) {
+		return &DirectoryIndexStatus{
+			Exists:    true,
+			Directory: resolvedPath,
+			Locked:    true,
+			Message:   "Index is currently locked (being updated)",
+		}, nil
+	}
+
+	// Load directory metadata
+	metadata := &models.DirectoryMetadata{}
+	if fileUtils.FileExists(indexLocation.MetadataFile) {
+		metadataBytes, err := os.ReadFile(indexLocation.MetadataFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read directory metadata: %w", err)
+		}
+
+		if err := metadata.FromJSON(metadataBytes); err != nil {
+			return nil, fmt.Errorf("failed to parse directory metadata: %w", err)
+		}
+	}
+
+	// Get index status
+	indexStatus, err := is.GetIndexingStatus(indexLocation.DataFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get index status: %w", err)
+	}
+
+	return &DirectoryIndexStatus{
+		Exists:         true,
+		Directory:      resolvedPath,
+		IndexLocation:  indexLocation,
+		IndexStatus:    indexStatus,
+		DirectoryMeta:  *metadata,
+		Locked:         false,
+		Message:        "Index found and accessible",
+	}, nil
+}
+
 // DeleteIndex removes an index from disk
 func (is *IndexingService) DeleteIndex(indexPath string) error {
 	if _, err := os.Stat(indexPath); os.IsNotExist(err) {
@@ -471,6 +604,33 @@ func (is *IndexingService) DeleteIndex(indexPath string) error {
 	}
 
 	is.logger.Info("Index deleted: %s", indexPath)
+	return nil
+}
+
+// DeleteDirectoryIndex removes a directory's index
+func (is *IndexingService) DeleteDirectoryIndex(directoryPath string) error {
+	fileUtils := lib.NewFileUtilities()
+
+	// Resolve path
+	resolvedPath, err := fileUtils.ResolvePath(directoryPath)
+	if err != nil {
+		return fmt.Errorf("failed to resolve directory path: %w", err)
+	}
+
+	// Create index location
+	indexLocation := fileUtils.CreateIndexLocation(resolvedPath)
+
+	// Check if locked
+	if fileUtils.IsLocked(indexLocation.LockFile) {
+		return fmt.Errorf("cannot delete index: directory '%s' is currently being indexed", resolvedPath)
+	}
+
+	// Remove index directory
+	if err := fileUtils.CleanupIndexFiles(indexLocation); err != nil {
+		return fmt.Errorf("failed to cleanup index files: %w", err)
+	}
+
+	is.logger.Info("Directory index deleted: %s", resolvedPath)
 	return nil
 }
 
@@ -530,4 +690,15 @@ func (l *SilentLogger) Debug(msg string, args ...interface{}) {
 // Warn discards warning messages
 func (l *SilentLogger) Warn(msg string, args ...interface{}) {
 	// Silent - no output
+}
+
+// DirectoryIndexStatus contains information about a directory's index
+type DirectoryIndexStatus struct {
+	Exists        bool                 `json:"exists"`
+	Directory     string               `json:"directory"`
+	IndexLocation *models.IndexLocation `json:"index_location,omitempty"`
+	IndexStatus   *IndexingStatus      `json:"index_status,omitempty"`
+	DirectoryMeta models.DirectoryMetadata `json:"directory_meta"`
+	Locked        bool                 `json:"locked"`
+	Message       string               `json:"message"`
 }

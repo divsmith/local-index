@@ -1,16 +1,16 @@
 {
-  "id": "idx_dd3039533622e9e31f2c1724697d290d",
+  "id": "idx_0be1b9d6887505081539d0d67507c781",
   "version": "1.0.0",
-  "repository_path": "/Users/parker/code/clindex/tests/integration/resources/TestIndexingIntegration",
-  "last_modified": "2025-10-06T22:48:18.457469-06:00",
+  "repository_path": "/Users/parker/code/local-index/tests/integration/resources/TestIndexingIntegration",
+  "last_modified": "2025-10-11T22:38:18.071127-06:00",
   "file_entries": {
     ".config/app.json": {
-      "file_path": "/Users/parker/code/clindex/tests/integration/resources/TestIndexingIntegration/.config/app.json",
-      "last_modified": "2025-10-06T22:48:14.861158139-06:00",
+      "file_path": "/Users/parker/code/local-index/tests/integration/resources/TestIndexingIntegration/.config/app.json",
+      "last_modified": "2025-10-11T22:38:14.515420824-06:00",
       "content_hash": "5fe003fa4cbf7fcdc6c7fa12d84e2d8fbb597ebe74ea1f555431ceb68b192f1b",
       "chunks": [
         {
-          "id": "chunk_81402fc69015f54ebaa87ce7c98b76e3",
+          "id": "chunk_47b262d64765283dbb3af5bb4894daeb",
           "content": "{\n    \"app_name\": \"test_app\",\n    \"version\": \"1.0.0\",\n    \"features\": [\"search\", \"indexing\"]\n}",
           "start_line": 1,
           "end_line": 5,
@@ -146,19 +146,19 @@
           ],
           "context": "",
           "language": "Unknown",
-          "created_at": "2025-10-06T22:48:17.043135-06:00"
+          "created_at": "2025-10-11T22:38:16.64415-06:00"
         }
       ],
       "size": 94,
       "language": "JSON"
     },
     "README.md": {
-      "file_path": "/Users/parker/code/clindex/tests/integration/resources/TestIndexingIntegration/README.md",
-      "last_modified": "2025-10-06T22:48:13.614746521-06:00",
+      "file_path": "/Users/parker/code/local-index/tests/integration/resources/TestIndexingIntegration/README.md",
+      "last_modified": "2025-10-11T22:38:13.328492662-06:00",
       "content_hash": "5e11b249ee3fe296d74571165c1794f5a2271cdcd1d25c35dd15ee593753daad",
       "chunks": [
         {
-          "id": "chunk_8371c03defb6eef88687ebe98c464427",
+          "id": "chunk_38ac897277cbcc19d5f1848968538e20",
           "content": "# Test Project\n\nThis is a test project for the code search indexing functionality.\n\n## Features\n\n- HTTP server with configuration\n- Database integration\n- API handlers\n- Utility functions\n\n## Usage\n\n1. Run `go run main.go`\n2. Visit http://localhost:8080",
           "start_line": 1,
           "end_line": 15,
@@ -294,10 +294,10 @@
           ],
           "context": "",
           "language": "Unknown",
-          "created_at": "2025-10-06T22:48:17.043126-06:00"
+          "created_at": "2025-10-11T22:38:16.64412-06:00"
         },
         {
-          "id": "chunk_bf42f82847f34735ae6183ff080c6611",
+          "id": "chunk_f86ddb3927d557f6a4174d69fae936eb",
           "content": "## Configuration\n\nSee config/config.go for configuration options.\n\n\n# Force Reindex Test\nThis line was added for force reindex testing.",
           "start_line": 16,
           "end_line": 24,
@@ -433,19 +433,19 @@
           ],
           "context": "",
           "language": "Unknown",
-          "created_at": "2025-10-06T22:48:17.043129-06:00"
+          "created_at": "2025-10-11T22:38:16.644128-06:00"
         }
       ],
       "size": 391,
       "language": "Markdown"
     },
     "config/config.go": {
-      "file_path": "/Users/parker/code/clindex/tests/integration/resources/TestIndexingIntegration/config/config.go",
-      "last_modified": "2025-10-06T22:48:13.187779511-06:00",
+      "file_path": "/Users/parker/code/local-index/tests/integration/resources/TestIndexingIntegration/config/config.go",
+      "last_modified": "2025-10-11T22:38:12.86570986-06:00",
       "content_hash": "46e230fe7dc01ac1a847e74f087d60b46cf137b21af9769e43e381f9496e6699",
       "chunks": [
         {
-          "id": "chunk_dde4c4e213a68338ecee38bb9249ba37",
+          "id": "chunk_a44ee198066fe3c43ab41c1dedf9bbfd",
           "content": "package config",
           "start_line": 1,
           "end_line": 1,
@@ -581,10 +581,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.043154-06:00"
+          "created_at": "2025-10-11T22:38:16.644134-06:00"
         },
         {
-          "id": "chunk_4ea139fd6464e5ac8629c49034c82725",
+          "id": "chunk_23a339538ad072814988a3e625fdd9f4",
           "content": "import (",
           "start_line": 3,
           "end_line": 3,
@@ -720,10 +720,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.043169-06:00"
+          "created_at": "2025-10-11T22:38:16.644149-06:00"
         },
         {
-          "id": "chunk_1be245d849ed215f728922fb2ae3a5ec",
+          "id": "chunk_7e1f21d4713e67214c1afe7d4baf7692",
           "content": "\"encoding/json\"",
           "start_line": 4,
           "end_line": 4,
@@ -859,10 +859,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.043186-06:00"
+          "created_at": "2025-10-11T22:38:16.644159-06:00"
         },
         {
-          "id": "chunk_04b0a34435a198fa9c4e91661a3a1c12",
+          "id": "chunk_0ee06428d25026d35d52dc95f30dbdb4",
           "content": "\"os\"",
           "start_line": 5,
           "end_line": 5,
@@ -998,10 +998,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.043196-06:00"
+          "created_at": "2025-10-11T22:38:16.644167-06:00"
         },
         {
-          "id": "chunk_5c5326571295f9cabb95a01bc7997478",
+          "id": "chunk_6ad34dd5876ee770e0f571d198b59cce",
           "content": ")",
           "start_line": 6,
           "end_line": 6,
@@ -1137,10 +1137,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.043203-06:00"
+          "created_at": "2025-10-11T22:38:16.644173-06:00"
         },
         {
-          "id": "chunk_ae8c22f8629368587763c99947c906ad",
+          "id": "chunk_775d78460b38cfb9dea883af1250568f",
           "content": "type Config struct {",
           "start_line": 8,
           "end_line": 8,
@@ -1276,10 +1276,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.04322-06:00"
+          "created_at": "2025-10-11T22:38:16.644199-06:00"
         },
         {
-          "id": "chunk_bb2ec1b625a827272c46c93620395942",
+          "id": "chunk_12972531e9ada184288deeb0cbe7e5c9",
           "content": "Port    int    `json:\"port\"`",
           "start_line": 9,
           "end_line": 9,
@@ -1415,10 +1415,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.043231-06:00"
+          "created_at": "2025-10-11T22:38:16.644209-06:00"
         },
         {
-          "id": "chunk_6abd7d8fa47c492b038e15e5aa17816a",
+          "id": "chunk_784a87cbaa2fb89583eb4bcc21397681",
           "content": "Timeout int    `json:\"timeout\"`",
           "start_line": 10,
           "end_line": 10,
@@ -1554,10 +1554,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.043238-06:00"
+          "created_at": "2025-10-11T22:38:16.644219-06:00"
         },
         {
-          "id": "chunk_4dda27280df408b793e425a2f65f2f2d",
+          "id": "chunk_a5657f70d591384ad9723eca09db7041",
           "content": "Host    string `json:\"host\"`",
           "start_line": 11,
           "end_line": 11,
@@ -1693,10 +1693,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.043247-06:00"
+          "created_at": "2025-10-11T22:38:16.644227-06:00"
         },
         {
-          "id": "chunk_57bd871b246b515caca982c5e832c73e",
+          "id": "chunk_b970c0023255b8fa6f8c5c0564bb50a0",
           "content": "Debug   bool   `json:\"debug\"`",
           "start_line": 12,
           "end_line": 12,
@@ -1832,10 +1832,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.043256-06:00"
+          "created_at": "2025-10-11T22:38:16.644238-06:00"
         },
         {
-          "id": "chunk_716726d62e0f7014891014ea30e8109f",
+          "id": "chunk_0d56b443941cf14b4d2eacd0df8e66e4",
           "content": "}",
           "start_line": 13,
           "end_line": 13,
@@ -1971,10 +1971,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.043262-06:00"
+          "created_at": "2025-10-11T22:38:16.644244-06:00"
         },
         {
-          "id": "chunk_444b014ccf394cf92a664b5b5b84ea99",
+          "id": "chunk_f81772dc798ce93dbe20c25a40539630",
           "content": "func LoadFromFile(path string) (*Config, error) {\n\tdata, err := os.ReadFile(path)\n\tif err != nil {\n\t\treturn nil, err\n\t}\n\n\tvar config Config\n\terr = json.Unmarshal(data, \u0026config)\n\tif err != nil {\n\t\treturn nil, err\n\t}\n\n\treturn \u0026config, nil\n}",
           "start_line": 15,
           "end_line": 28,
@@ -2110,10 +2110,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.043385-06:00"
+          "created_at": "2025-10-11T22:38:16.644367-06:00"
         },
         {
-          "id": "chunk_bff22e56f4d17871e601d4baa67b4c5d",
+          "id": "chunk_d315966be5b60b46651bb6ee20eb36c9",
           "content": "func (c *Config) Validate() error {\n\tif c.Port \u003c= 0 || c.Port \u003e 65535 {\n\t\treturn fmt.Errorf(\"invalid port: %d\", c.Port)\n\t}\n\tif c.Timeout \u003c= 0 {\n\t\treturn fmt.Errorf(\"timeout must be positive\")\n\t}\n\treturn nil\n}",
           "start_line": 30,
           "end_line": 38,
@@ -2249,19 +2249,19 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.043471-06:00"
+          "created_at": "2025-10-11T22:38:16.644446-06:00"
         }
       ],
       "size": 648,
       "language": "Go"
     },
     "frontend/app.js": {
-      "file_path": "/Users/parker/code/clindex/tests/integration/resources/TestIndexingIntegration/frontend/app.js",
-      "last_modified": "2025-10-06T22:48:14.13962718-06:00",
+      "file_path": "/Users/parker/code/local-index/tests/integration/resources/TestIndexingIntegration/frontend/app.js",
+      "last_modified": "2025-10-11T22:38:13.862170663-06:00",
       "content_hash": "14700afffeb09fcb3a887db0089ec904ad2fdfa7a1ca5e9bf0a34d44a0a9dfb9",
       "chunks": [
         {
-          "id": "chunk_f77bdb3b2e22a6ea42ddae31d953bf6d",
+          "id": "chunk_2833fa4ff1dfdaf511c2c395bb815b3d",
           "content": "function processData(data) {\n    return data.map(item =\u003e ({\n        ...item,\n        processed: true\n    }));\n}",
           "start_line": 2,
           "end_line": 7,
@@ -2397,10 +2397,10 @@
           ],
           "context": "",
           "language": "JavaScript",
-          "created_at": "2025-10-06T22:48:17.04319-06:00"
+          "created_at": "2025-10-11T22:38:16.64419-06:00"
         },
         {
-          "id": "chunk_4f109a023a808ce9269df60c2b1ed4b7",
+          "id": "chunk_439c8d03294de10d6731e11e104aa215",
           "content": "class APIManager {",
           "start_line": 9,
           "end_line": 9,
@@ -2536,10 +2536,10 @@
           ],
           "context": "",
           "language": "JavaScript",
-          "created_at": "2025-10-06T22:48:17.043236-06:00"
+          "created_at": "2025-10-11T22:38:16.644238-06:00"
         },
         {
-          "id": "chunk_06217b199549273beab593f8e86c1835",
+          "id": "chunk_da00c40a4a4265b8b72821598a860d50",
           "content": "constructor(baseURL) {\n        this.baseURL = baseURL;\n    }",
           "start_line": 10,
           "end_line": 12,
@@ -2675,10 +2675,10 @@
           ],
           "context": "",
           "language": "JavaScript",
-          "created_at": "2025-10-06T22:48:17.043281-06:00"
+          "created_at": "2025-10-11T22:38:16.644281-06:00"
         },
         {
-          "id": "chunk_6cdccd01a26992c0a4b126c15f511ddb",
+          "id": "chunk_77e7f02de25cd394adbcf1fa872d31fb",
           "content": "async fetch(endpoint) {",
           "start_line": 14,
           "end_line": 14,
@@ -2814,10 +2814,10 @@
           ],
           "context": "",
           "language": "JavaScript",
-          "created_at": "2025-10-06T22:48:17.043335-06:00"
+          "created_at": "2025-10-11T22:38:16.644339-06:00"
         },
         {
-          "id": "chunk_0cfbafb54cfc3122197e092c5299fe38",
+          "id": "chunk_7c62bbf0eedc9b3058123a17943ea8d2",
           "content": "const response = await fetch(this.baseURL + endpoint);",
           "start_line": 15,
           "end_line": 15,
@@ -2953,10 +2953,10 @@
           ],
           "context": "",
           "language": "JavaScript",
-          "created_at": "2025-10-06T22:48:17.043358-06:00"
+          "created_at": "2025-10-11T22:38:16.644358-06:00"
         },
         {
-          "id": "chunk_30cd3bb0fe9a868ba23a9b127a5707da",
+          "id": "chunk_add84616df2f3524fda6f52b388b77ca",
           "content": "return response.json();",
           "start_line": 16,
           "end_line": 16,
@@ -3092,19 +3092,19 @@
           ],
           "context": "",
           "language": "JavaScript",
-          "created_at": "2025-10-06T22:48:17.043384-06:00"
+          "created_at": "2025-10-11T22:38:16.644385-06:00"
         }
       ],
       "size": 348,
       "language": "JavaScript"
     },
     "handlers/api.go": {
-      "file_path": "/Users/parker/code/clindex/tests/integration/resources/TestIndexingIntegration/handlers/api.go",
-      "last_modified": "2025-10-06T22:48:13.188002344-06:00",
+      "file_path": "/Users/parker/code/local-index/tests/integration/resources/TestIndexingIntegration/handlers/api.go",
+      "last_modified": "2025-10-11T22:38:12.868221132-06:00",
       "content_hash": "a5c310c21efa786a64f52aebb2ccf463d8c194f60ae5f2cdf24f12a56b337ea9",
       "chunks": [
         {
-          "id": "chunk_c3702095c81f3931ac74edfe38068e9f",
+          "id": "chunk_6a56477bd5429b66807a5d875cc56b0c",
           "content": "package handlers",
           "start_line": 1,
           "end_line": 1,
@@ -3240,10 +3240,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.070214-06:00"
+          "created_at": "2025-10-11T22:38:16.670312-06:00"
         },
         {
-          "id": "chunk_e714ddbcbe4f7ad8625da61cde3fe8a8",
+          "id": "chunk_3e24fbb4c0e4485f477e32cb69e4dbba",
           "content": "import (",
           "start_line": 3,
           "end_line": 3,
@@ -3379,10 +3379,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.070229-06:00"
+          "created_at": "2025-10-11T22:38:16.670328-06:00"
         },
         {
-          "id": "chunk_8b4e6bce68a9af0dcb175993d3bd8e5d",
+          "id": "chunk_0cfb8d224d3e65f121d5d23fac6b3dea",
           "content": "\"encoding/json\"",
           "start_line": 4,
           "end_line": 4,
@@ -3518,10 +3518,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.070237-06:00"
+          "created_at": "2025-10-11T22:38:16.670336-06:00"
         },
         {
-          "id": "chunk_f4e83ae9e594f2361c44713d6360aa76",
+          "id": "chunk_680da7ceae8466231125c02df54ff850",
           "content": "\"net/http\"",
           "start_line": 5,
           "end_line": 5,
@@ -3657,10 +3657,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.070244-06:00"
+          "created_at": "2025-10-11T22:38:16.670345-06:00"
         },
         {
-          "id": "chunk_b0cdeb461ea4678c067743177cc78fc5",
+          "id": "chunk_371b2e4bedd66d857c18a437b0756f6a",
           "content": "\"time\"",
           "start_line": 6,
           "end_line": 6,
@@ -3796,10 +3796,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.07025-06:00"
+          "created_at": "2025-10-11T22:38:16.670353-06:00"
         },
         {
-          "id": "chunk_fad320dd956ad55e0c3142792fe8f5f0",
+          "id": "chunk_64b9706e061a23403dee39b8cf3468a4",
           "content": ")",
           "start_line": 7,
           "end_line": 7,
@@ -3935,10 +3935,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.070256-06:00"
+          "created_at": "2025-10-11T22:38:16.67036-06:00"
         },
         {
-          "id": "chunk_68dbb3423283b9277ff0153c1072f6fe",
+          "id": "chunk_3ebbcca4e68bca6cf692d0a87f1a0a2f",
           "content": "type APIHandler struct {",
           "start_line": 9,
           "end_line": 9,
@@ -4074,10 +4074,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.070269-06:00"
+          "created_at": "2025-10-11T22:38:16.670372-06:00"
         },
         {
-          "id": "chunk_a4fa431604ae3d4bca8b54720bfa2099",
+          "id": "chunk_ae4f093ad240391f9adf3bb098a6a969",
           "content": "server *server.Server",
           "start_line": 10,
           "end_line": 10,
@@ -4213,10 +4213,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.070276-06:00"
+          "created_at": "2025-10-11T22:38:16.670379-06:00"
         },
         {
-          "id": "chunk_3aa864afd3a42be970db4286a6c5c3a8",
+          "id": "chunk_e358214839bc434f5bd55048ac261ea2",
           "content": "}",
           "start_line": 11,
           "end_line": 11,
@@ -4352,10 +4352,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.070282-06:00"
+          "created_at": "2025-10-11T22:38:16.670386-06:00"
         },
         {
-          "id": "chunk_5a38495640a8a4c89fae414e13de5c12",
+          "id": "chunk_525a8adedbb43f9e394f5756ee3e77e9",
           "content": "func NewAPIHandler(srv *server.Server) *APIHandler {\n\treturn \u0026APIHandler{\n\t\tserver: srv,\n\t}\n}",
           "start_line": 13,
           "end_line": 17,
@@ -4491,10 +4491,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.070316-06:00"
+          "created_at": "2025-10-11T22:38:16.67043-06:00"
         },
         {
-          "id": "chunk_e2054ed52888aed6bec091aae89dc1df",
+          "id": "chunk_fab28fc0127cc82c95b2ac8792f38ea1",
           "content": "func (h *APIHandler) HandleAPIRequest(w http.ResponseWriter, r *http.Request) {\n\tswitch r.Method {\n\tcase http.MethodGet:\n\t\th.handleGet(w, r)\n\tcase http.MethodPost:\n\t\th.handlePost(w, r)\n\tdefault:\n\t\thttp.Error(w, \"Method not allowed\", http.StatusMethodNotAllowed)\n\t}\n}",
           "start_line": 19,
           "end_line": 28,
@@ -4630,10 +4630,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.07038-06:00"
+          "created_at": "2025-10-11T22:38:16.670507-06:00"
         },
         {
-          "id": "chunk_0da28bd168bdd1cd5b5417414762b903",
+          "id": "chunk_735844193f0b8c92e871e3df14c6b0d9",
           "content": "func (h *APIHandler) handleGet(w http.ResponseWriter, r *http.Request) {\n\tresponse := map[string]interface{}{\n\t\t\"message\": \"GET request handled\",\n\t\t\"time\":    time.Now(),\n\t}\n\n\tw.Header().Set(\"Content-Type\", \"application/json\")\n\tjson.NewEncoder(w).Encode(response)\n}",
           "start_line": 30,
           "end_line": 38,
@@ -4769,10 +4769,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.070436-06:00"
+          "created_at": "2025-10-11T22:38:16.670573-06:00"
         },
         {
-          "id": "chunk_3a63e17525dd579e98701bf0a20eeff8",
+          "id": "chunk_a4678d7a1ec35cd02fc051038f03d08a",
           "content": "func (h *APIHandler) handlePost(w http.ResponseWriter, r *http.Request) {\n\tvar data map[string]interface{}\n\tif err := json.NewDecoder(r.Body).Decode(\u0026data); err != nil {\n\t\thttp.Error(w, \"Invalid JSON\", http.StatusBadRequest)\n\t\treturn\n\t}\n\n\tresponse := map[string]interface{}{\n\t\t\"received\": data,\n\t\t\"status\":   \"processed\",\n\t}\n\n\tw.Header().Set(\"Content-Type\", \"application/json\")\n\tw.WriteHeader(http.StatusCreated)\n\tjson.NewEncoder(w).Encode(response)\n}",
           "start_line": 40,
           "end_line": 55,
@@ -4908,19 +4908,19 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.070532-06:00"
+          "created_at": "2025-10-11T22:38:16.670684-06:00"
         }
       ],
       "size": 1200,
       "language": "Go"
     },
     "internal/database/db.go": {
-      "file_path": "/Users/parker/code/clindex/tests/integration/resources/TestIndexingIntegration/internal/database/db.go",
-      "last_modified": "2025-10-06T22:48:13.187358469-06:00",
+      "file_path": "/Users/parker/code/local-index/tests/integration/resources/TestIndexingIntegration/internal/database/db.go",
+      "last_modified": "2025-10-11T22:38:12.868526255-06:00",
       "content_hash": "85c1437ef7cb8e93ebd8d54cb18044f071c1b2c60a9062ea78fe9cfee6ec442c",
       "chunks": [
         {
-          "id": "chunk_41f750892f19ed9e0e791df85b9e083f",
+          "id": "chunk_b0008cf53412625d796cd2aa022473f4",
           "content": "package database",
           "start_line": 1,
           "end_line": 1,
@@ -5056,10 +5056,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.082848-06:00"
+          "created_at": "2025-10-11T22:38:16.683677-06:00"
         },
         {
-          "id": "chunk_d4dcc38a764df8e8993847bd548d5c0f",
+          "id": "chunk_0f0169c157b37f4592a8e2707ed579fa",
           "content": "import (",
           "start_line": 3,
           "end_line": 3,
@@ -5195,10 +5195,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.082862-06:00"
+          "created_at": "2025-10-11T22:38:16.683692-06:00"
         },
         {
-          "id": "chunk_82ebbae158d44c55f9286fa1f44c6f74",
+          "id": "chunk_80263639b3b4c106e7c4f5a75718db91",
           "content": "\"database/sql\"",
           "start_line": 4,
           "end_line": 4,
@@ -5334,10 +5334,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.082874-06:00"
+          "created_at": "2025-10-11T22:38:16.6837-06:00"
         },
         {
-          "id": "chunk_62650228fb036e2508b9378e17a84154",
+          "id": "chunk_9881ea124848a8d8d275e642d825512d",
           "content": "\"fmt\"",
           "start_line": 5,
           "end_line": 5,
@@ -5473,10 +5473,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.082882-06:00"
+          "created_at": "2025-10-11T22:38:16.683709-06:00"
         },
         {
-          "id": "chunk_b697f5eaac68734b223ed44dce5d4181",
+          "id": "chunk_a33ef8bdd422f5135e833084a2d88a70",
           "content": "\"time\"",
           "start_line": 6,
           "end_line": 6,
@@ -5612,10 +5612,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.082888-06:00"
+          "created_at": "2025-10-11T22:38:16.683715-06:00"
         },
         {
-          "id": "chunk_6f0a5a9f652e66d09b1b8b94979c6771",
+          "id": "chunk_8f3efb9741b506a58de58cbf66dcec88",
           "content": "_ \"github.com/lib/pq\"",
           "start_line": 7,
           "end_line": 7,
@@ -5751,10 +5751,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.082895-06:00"
+          "created_at": "2025-10-11T22:38:16.683723-06:00"
         },
         {
-          "id": "chunk_c411f2123fcd436d6d488aacf70f9f32",
+          "id": "chunk_8fa84150ff37f5c1210ba0b331d9947c",
           "content": ")",
           "start_line": 8,
           "end_line": 8,
@@ -5890,10 +5890,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.082901-06:00"
+          "created_at": "2025-10-11T22:38:16.68373-06:00"
         },
         {
-          "id": "chunk_2996c0314348309c1d6bdfa52881bc8b",
+          "id": "chunk_dcbcbe5146a55cacfb884699162d3bae",
           "content": "type Database struct {",
           "start_line": 10,
           "end_line": 10,
@@ -6029,10 +6029,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.082917-06:00"
+          "created_at": "2025-10-11T22:38:16.683744-06:00"
         },
         {
-          "id": "chunk_2a098ecfa31e2ad86b8816c68abcd2c1",
+          "id": "chunk_bb7a012786a3fbcced5453ad37cf0c4f",
           "content": "db *sql.DB",
           "start_line": 11,
           "end_line": 11,
@@ -6168,10 +6168,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.082943-06:00"
+          "created_at": "2025-10-11T22:38:16.683754-06:00"
         },
         {
-          "id": "chunk_0d68e9c3f007c54e0c868f283a7f9cfb",
+          "id": "chunk_7bdecb381c55c2717a65c4c50382daf3",
           "content": "}",
           "start_line": 12,
           "end_line": 12,
@@ -6307,10 +6307,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.082954-06:00"
+          "created_at": "2025-10-11T22:38:16.683761-06:00"
         },
         {
-          "id": "chunk_728597ab5682b4e35e6611f6e2568db0",
+          "id": "chunk_26c46ba2182b47a1a38edac896e937a4",
           "content": "func NewDatabase(dsn string) (*Database, error) {\n\tdb, err := sql.Open(\"postgres\", dsn)\n\tif err != nil {\n\t\treturn nil, fmt.Errorf(\"failed to connect to database: %w\", err)\n\t}\n\n\tif err := db.Ping(); err != nil {\n\t\treturn nil, fmt.Errorf(\"failed to ping database: %w\", err)\n\t}\n\n\treturn \u0026Database{db: db}, nil\n}",
           "start_line": 14,
           "end_line": 25,
@@ -6446,10 +6446,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.083035-06:00"
+          "created_at": "2025-10-11T22:38:16.683846-06:00"
         },
         {
-          "id": "chunk_4353fc7d5b5fa949e14e261963366644",
+          "id": "chunk_9515998eb69c151040b178aba9fb98f6",
           "content": "func (d *Database) Close() error {\n\treturn d.db.Close()\n}",
           "start_line": 27,
           "end_line": 29,
@@ -6585,10 +6585,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.083059-06:00"
+          "created_at": "2025-10-11T22:38:16.68387-06:00"
         },
         {
-          "id": "chunk_d96e8d8e0ef6fb2312d41f673e51afec",
+          "id": "chunk_a9c453012000660df88aa125768f4e32",
           "content": "func (d *Database) CreateUser(name, email string) error {\n\tquery := `INSERT INTO users (name, email) VALUES ($1, $2)`\n\t_, err := d.db.Exec(query, name, email)\n\treturn err\n}",
           "start_line": 31,
           "end_line": 35,
@@ -6724,10 +6724,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.083096-06:00"
+          "created_at": "2025-10-11T22:38:16.683906-06:00"
         },
         {
-          "id": "chunk_d7b9525e6711bfeaada2deec1d7dff62",
+          "id": "chunk_8a17954a402339bf82d2ae53276a1b95",
           "content": "func (d *Database) GetUser(id int) (*User, error) {\n\tquery := `SELECT id, name, email, created_at FROM users WHERE id = $1`\n\tvar user User\n\terr := d.db.QueryRow(query, id).Scan(\u0026user.ID, \u0026user.Name, \u0026user.Email, \u0026user.CreatedAt)\n\tif err != nil {\n\t\treturn nil, err\n\t}\n\treturn \u0026user, nil\n}",
           "start_line": 37,
           "end_line": 45,
@@ -6863,10 +6863,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.083155-06:00"
+          "created_at": "2025-10-11T22:38:16.683963-06:00"
         },
         {
-          "id": "chunk_e244beb24b1f67440c7286a69254e3c2",
+          "id": "chunk_5ca1a47e78d3a6bf3bf23ab88d482c7b",
           "content": "type User struct {",
           "start_line": 47,
           "end_line": 47,
@@ -7002,10 +7002,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.083167-06:00"
+          "created_at": "2025-10-11T22:38:16.683976-06:00"
         },
         {
-          "id": "chunk_6d2be813ad8d997dfac3c0c83d3d721f",
+          "id": "chunk_449be0330c91b1dd47227a10bca1c0bc",
           "content": "ID        int       `json:\"id\"`",
           "start_line": 48,
           "end_line": 48,
@@ -7141,10 +7141,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.083173-06:00"
+          "created_at": "2025-10-11T22:38:16.683982-06:00"
         },
         {
-          "id": "chunk_6e6da7018382fbc96e0fa12e0a67bbf2",
+          "id": "chunk_a6a1c821165fc0a0511fae902f33c3ba",
           "content": "Name      string    `json:\"name\"`",
           "start_line": 49,
           "end_line": 49,
@@ -7280,10 +7280,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.08318-06:00"
+          "created_at": "2025-10-11T22:38:16.683988-06:00"
         },
         {
-          "id": "chunk_d2259a1eed07d8f7a62b78221425e469",
+          "id": "chunk_0aa74461996684b2ff1171a01a871a34",
           "content": "Email     string    `json:\"email\"`",
           "start_line": 50,
           "end_line": 50,
@@ -7419,10 +7419,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.083186-06:00"
+          "created_at": "2025-10-11T22:38:16.683995-06:00"
         },
         {
-          "id": "chunk_7639eb3724b5bd8e512570023393fa6f",
+          "id": "chunk_17dc3476325858242c1ea8bc0e974167",
           "content": "CreatedAt time.Time `json:\"created_at\"`",
           "start_line": 51,
           "end_line": 51,
@@ -7558,10 +7558,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.083193-06:00"
+          "created_at": "2025-10-11T22:38:16.684005-06:00"
         },
         {
-          "id": "chunk_c2b2f0fa04ce557ec630b6a0094b98e7",
+          "id": "chunk_33ccbc5a67ad6ece647b205abc58a3b8",
           "content": "}",
           "start_line": 52,
           "end_line": 52,
@@ -7697,19 +7697,19 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.083199-06:00"
+          "created_at": "2025-10-11T22:38:16.684012-06:00"
         }
       ],
       "size": 1120,
       "language": "Go"
     },
     "main.go": {
-      "file_path": "/Users/parker/code/clindex/tests/integration/resources/TestIndexingIntegration/main.go",
-      "last_modified": "2025-10-06T22:48:14.06448411-06:00",
+      "file_path": "/Users/parker/code/local-index/tests/integration/resources/TestIndexingIntegration/main.go",
+      "last_modified": "2025-10-11T22:38:13.790302389-06:00",
       "content_hash": "7929abb34e7503d0faf12b4393ee81a615ce77f1232951c98166c91397957b64",
       "chunks": [
         {
-          "id": "chunk_35b8cfa126e8f3c91593006e1bd06e82",
+          "id": "chunk_2090d7f67abef28ababcecd64dce3af5",
           "content": "package main",
           "start_line": 1,
           "end_line": 1,
@@ -7845,10 +7845,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.158299-06:00"
+          "created_at": "2025-10-11T22:38:16.760996-06:00"
         },
         {
-          "id": "chunk_4b832be8cc0b552677cd59480ce99441",
+          "id": "chunk_bf311af9a66eb540e8707b8c120e4c91",
           "content": "import (",
           "start_line": 3,
           "end_line": 3,
@@ -7984,10 +7984,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.158314-06:00"
+          "created_at": "2025-10-11T22:38:16.76101-06:00"
         },
         {
-          "id": "chunk_6fd1991909cb510c2a4b3955387e36e7",
+          "id": "chunk_cc7277ca6094a2d7c9b8b0394a28ac39",
           "content": "\"fmt\"",
           "start_line": 4,
           "end_line": 4,
@@ -8123,10 +8123,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.158323-06:00"
+          "created_at": "2025-10-11T22:38:16.761018-06:00"
         },
         {
-          "id": "chunk_986e567a54d9a8ead69a409b7a5a0dde",
+          "id": "chunk_0659e9402bc34e3d9e7fee51ae944856",
           "content": "\"log\"",
           "start_line": 5,
           "end_line": 5,
@@ -8262,10 +8262,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.15833-06:00"
+          "created_at": "2025-10-11T22:38:16.761025-06:00"
         },
         {
-          "id": "chunk_7876cecbc3d3465b90b11fb62e523be3",
+          "id": "chunk_ae8023d131b07dbae7d53146bcb41ad1",
           "content": "\"os\"",
           "start_line": 6,
           "end_line": 6,
@@ -8401,10 +8401,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.158336-06:00"
+          "created_at": "2025-10-11T22:38:16.761031-06:00"
         },
         {
-          "id": "chunk_7fecb9c73ba92689e808c09aa5b0fba8",
+          "id": "chunk_2f30d34b27eab2971294a4c1019236a9",
           "content": ")",
           "start_line": 7,
           "end_line": 7,
@@ -8540,10 +8540,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.158343-06:00"
+          "created_at": "2025-10-11T22:38:16.761037-06:00"
         },
         {
-          "id": "chunk_cc638b3dec8e4e7916b2266ea0e9b378",
+          "id": "chunk_25b0c433c8cf2d762134a1c4ff085e65",
           "content": "func main() {\n\tconfig := LoadConfig()\n\n\tif err := StartServer(config); err != nil {\n\t\tlog.Fatalf(\"Failed to start server: %v\", err)\n\t}\n\n\tfmt.Println(\"Server started successfully\")\n}",
           "start_line": 9,
           "end_line": 17,
@@ -8679,10 +8679,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.15841-06:00"
+          "created_at": "2025-10-11T22:38:16.761097-06:00"
         },
         {
-          "id": "chunk_8f29f3839460be3fed8710acd426de55",
+          "id": "chunk_6f320c2cf4ecb5d4e7450a84db932468",
           "content": "func LoadConfig() *Config {\n\treturn \u0026Config{\n\t\tPort:    8080,\n\t\tTimeout: 30,\n\t}\n}",
           "start_line": 19,
           "end_line": 24,
@@ -8818,10 +8818,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.158451-06:00"
+          "created_at": "2025-10-11T22:38:16.761136-06:00"
         },
         {
-          "id": "chunk_9a7e3a12e5290681ccb05fa823a55e81",
+          "id": "chunk_a5f07830aaca573e0bf1c83f57cd98d6",
           "content": "func NewFunction() {\n\tfmt.Println(\"This is a new function\")\n}",
           "start_line": 28,
           "end_line": 30,
@@ -8957,19 +8957,19 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.158479-06:00"
+          "created_at": "2025-10-11T22:38:16.761165-06:00"
         }
       ],
       "size": 427,
       "language": "Go"
     },
     "scripts/setup.py": {
-      "file_path": "/Users/parker/code/clindex/tests/integration/resources/TestIndexingIntegration/scripts/setup.py",
-      "last_modified": "2025-10-06T22:48:14.13970218-06:00",
+      "file_path": "/Users/parker/code/local-index/tests/integration/resources/TestIndexingIntegration/scripts/setup.py",
+      "last_modified": "2025-10-11T22:38:13.86224562-06:00",
       "content_hash": "1c6e599d2c50a8e2f3536a9fe9cd747f65f2a8194ffd0ec69c4500bb0e4cd1af",
       "chunks": [
         {
-          "id": "chunk_b1d491ea156c2ff81371e51f52d954e8",
+          "id": "chunk_1083f59c4be8845b26fe024c5616371a",
           "content": "import os\nimport sys",
           "start_line": 3,
           "end_line": 5,
@@ -9105,10 +9105,10 @@
           ],
           "context": "",
           "language": "Python",
-          "created_at": "2025-10-06T22:48:17.326327-06:00"
+          "created_at": "2025-10-11T22:38:16.928609-06:00"
         },
         {
-          "id": "chunk_2edb9977e6e61e11a119f482fa7f42be",
+          "id": "chunk_08b67816bdd600402a597911f43d8efc",
           "content": "def setup_environment():",
           "start_line": 6,
           "end_line": 6,
@@ -9244,10 +9244,10 @@
           ],
           "context": "",
           "language": "Python",
-          "created_at": "2025-10-06T22:48:17.326328-06:00"
+          "created_at": "2025-10-11T22:38:16.92861-06:00"
         },
         {
-          "id": "chunk_db930f8fd140f62662266fd61d7d80d4",
+          "id": "chunk_6a4f228a4725f9b3ff137c129d3469b9",
           "content": "\"\"\"Setup the development environment\"\"\"\n    print(\"Setting up environment...\")\n    os.makedirs(\"logs\", exist_ok=True)\n    os.makedirs(\"data\", exist_ok=True)\n    print(\"Environment setup complete!\")",
           "start_line": 7,
           "end_line": 15,
@@ -9383,10 +9383,10 @@
           ],
           "context": "",
           "language": "Python",
-          "created_at": "2025-10-06T22:48:17.326331-06:00"
+          "created_at": "2025-10-11T22:38:16.928612-06:00"
         },
         {
-          "id": "chunk_6af9fc3df4a0482d754f22ba26eb8e7e",
+          "id": "chunk_7d353859335ede74d20dbd23ea3d045c",
           "content": "def validate_config():",
           "start_line": 16,
           "end_line": 16,
@@ -9522,10 +9522,10 @@
           ],
           "context": "",
           "language": "Python",
-          "created_at": "2025-10-06T22:48:17.326332-06:00"
+          "created_at": "2025-10-11T22:38:16.928613-06:00"
         },
         {
-          "id": "chunk_142ed01b71090bdbde05c55adb70911b",
+          "id": "chunk_5d69f4abeba44113deb014fe09603ffc",
           "content": "\"\"\"Validate configuration files\"\"\"\n    config_file = \"config.json\"\n    if not os.path.exists(config_file):",
           "start_line": 17,
           "end_line": 19,
@@ -9661,10 +9661,10 @@
           ],
           "context": "",
           "language": "Python",
-          "created_at": "2025-10-06T22:48:17.326333-06:00"
+          "created_at": "2025-10-11T22:38:16.928615-06:00"
         },
         {
-          "id": "chunk_546ec67ad7eb5562cc1fdf7b5f1ec7d1",
+          "id": "chunk_40032d8a4433d94b8e9db2a7bb03af6c",
           "content": "print(f\"Configuration file {config_file} not found\")\n        return False\n    print(\"Configuration is valid\")\n    return True\nif __name__ == \"__main__\":\n    setup_environment()\n    validate_config()",
           "start_line": 20,
           "end_line": 29,
@@ -9800,19 +9800,19 @@
           ],
           "context": "",
           "language": "Python",
-          "created_at": "2025-10-06T22:48:17.326335-06:00"
+          "created_at": "2025-10-11T22:38:16.928617-06:00"
         }
       ],
       "size": 654,
       "language": "Python"
     },
     "server/server.go": {
-      "file_path": "/Users/parker/code/clindex/tests/integration/resources/TestIndexingIntegration/server/server.go",
-      "last_modified": "2025-10-06T22:48:13.187890927-06:00",
+      "file_path": "/Users/parker/code/local-index/tests/integration/resources/TestIndexingIntegration/server/server.go",
+      "last_modified": "2025-10-11T22:38:12.868100217-06:00",
       "content_hash": "1aa5955b0b51cb07e9fcf51d459df305fe2de2f8198e1ed0c9634c53b86ad889",
       "chunks": [
         {
-          "id": "chunk_7993c2a54a01dd0db138ee87b30eae68",
+          "id": "chunk_f1e29d42098de8b4ee2956e0e27acb9c",
           "content": "package server",
           "start_line": 1,
           "end_line": 1,
@@ -9948,10 +9948,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.497407-06:00"
+          "created_at": "2025-10-11T22:38:17.100394-06:00"
         },
         {
-          "id": "chunk_fa11d6add6c36ce41586f05d46384ba5",
+          "id": "chunk_c8009e76a625aa2e71fed612735f12a8",
           "content": "import (",
           "start_line": 3,
           "end_line": 3,
@@ -10087,10 +10087,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.497421-06:00"
+          "created_at": "2025-10-11T22:38:17.100409-06:00"
         },
         {
-          "id": "chunk_10c8cd15b3dbc441a7e886bcaadeb6ee",
+          "id": "chunk_b5a557cea6fcf4c0324c0a4a2060e6d4",
           "content": "\"context\"",
           "start_line": 4,
           "end_line": 4,
@@ -10226,10 +10226,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.497429-06:00"
+          "created_at": "2025-10-11T22:38:17.100417-06:00"
         },
         {
-          "id": "chunk_144d89429aed4b725cf4c03375115cd7",
+          "id": "chunk_58f59b716620e8172cf16006dc787010",
           "content": "\"fmt\"",
           "start_line": 5,
           "end_line": 5,
@@ -10365,10 +10365,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.497437-06:00"
+          "created_at": "2025-10-11T22:38:17.100425-06:00"
         },
         {
-          "id": "chunk_73c0b1ad00ea8469eb63b9e6e794dbdf",
+          "id": "chunk_4d34f06144f624fbeeab225d75df4348",
           "content": "\"net/http\"",
           "start_line": 6,
           "end_line": 6,
@@ -10504,10 +10504,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.49746-06:00"
+          "created_at": "2025-10-11T22:38:17.100431-06:00"
         },
         {
-          "id": "chunk_c8df4c5a606d6ddf70b7ad188d5f5cb2",
+          "id": "chunk_d11d25a2e430d2d2a2966d9de2a65ff6",
           "content": "\"time\"",
           "start_line": 7,
           "end_line": 7,
@@ -10643,10 +10643,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.497467-06:00"
+          "created_at": "2025-10-11T22:38:17.100438-06:00"
         },
         {
-          "id": "chunk_dc0fbe9b1b8f5fa3b0911a190ece328d",
+          "id": "chunk_7b8a037e878264ba604f3f0fc8182b08",
           "content": ")",
           "start_line": 8,
           "end_line": 8,
@@ -10782,10 +10782,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.497474-06:00"
+          "created_at": "2025-10-11T22:38:17.100446-06:00"
         },
         {
-          "id": "chunk_9611887a7c2b9a6bf21467f6de4f8b66",
+          "id": "chunk_3769e23051b8a6611878a8f8a394b37f",
           "content": "type Server struct {",
           "start_line": 10,
           "end_line": 10,
@@ -10921,10 +10921,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.497487-06:00"
+          "created_at": "2025-10-11T22:38:17.100461-06:00"
         },
         {
-          "id": "chunk_437379a14a76e3d64e06fbb8a501a82c",
+          "id": "chunk_e24c9f237bb2d010b1038c4e95951c52",
           "content": "config *config.Config",
           "start_line": 11,
           "end_line": 11,
@@ -11060,10 +11060,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.497494-06:00"
+          "created_at": "2025-10-11T22:38:17.100468-06:00"
         },
         {
-          "id": "chunk_7404ddfbf8408039d7f1239a526b24af",
+          "id": "chunk_2e41f6a4db6b48d144952d8e59ea831f",
           "content": "server *http.Server",
           "start_line": 12,
           "end_line": 12,
@@ -11199,10 +11199,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.497501-06:00"
+          "created_at": "2025-10-11T22:38:17.100477-06:00"
         },
         {
-          "id": "chunk_40618463d159b702ce2e2f8a831c7a58",
+          "id": "chunk_65d3778b747b5ca59133087da4e055d6",
           "content": "}",
           "start_line": 13,
           "end_line": 13,
@@ -11338,10 +11338,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.497507-06:00"
+          "created_at": "2025-10-11T22:38:17.100483-06:00"
         },
         {
-          "id": "chunk_edc09e9a894336ff238346ad3a5de21a",
+          "id": "chunk_b25396454196c2b41ee982feb5de0d13",
           "content": "func NewServer(cfg *config.Config) *Server {\n\treturn \u0026Server{\n\t\tconfig: cfg,\n\t\tserver: \u0026http.Server{\n\t\t\tAddr:         fmt.Sprintf(\":%d\", cfg.Port),\n\t\t\tReadTimeout:  time.Duration(cfg.Timeout) * time.Second,\n\t\t\tWriteTimeout: time.Duration(cfg.Timeout) * time.Second,\n\t\t},\n\t}\n}",
           "start_line": 15,
           "end_line": 24,
@@ -11477,10 +11477,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.497571-06:00"
+          "created_at": "2025-10-11T22:38:17.100556-06:00"
         },
         {
-          "id": "chunk_709b9238fb6191a6ea421499a750dfd1",
+          "id": "chunk_a026de46e313c0a5933b232b0ac0715c",
           "content": "func (s *Server) Start() error {\n\treturn s.server.ListenAndServe()\n}",
           "start_line": 26,
           "end_line": 28,
@@ -11616,10 +11616,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.497595-06:00"
+          "created_at": "2025-10-11T22:38:17.100583-06:00"
         },
         {
-          "id": "chunk_5563952a956cb2bf9342fee2ed27fc1d",
+          "id": "chunk_c7c33c01a4b313ffcbe36463d620ac9e",
           "content": "func (s *Server) Stop(ctx context.Context) error {\n\treturn s.server.Shutdown(ctx)\n}",
           "start_line": 30,
           "end_line": 32,
@@ -11755,10 +11755,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.497622-06:00"
+          "created_at": "2025-10-11T22:38:17.100606-06:00"
         },
         {
-          "id": "chunk_1433b1af4194bc40d1576038923008df",
+          "id": "chunk_7afa2e2c1311c017ca01e037db0f1a3a",
           "content": "func (s *Server) SetupRoutes() {\n\thttp.HandleFunc(\"/\", s.handleHome)\n\thttp.HandleFunc(\"/health\", s.handleHealth)\n}",
           "start_line": 34,
           "end_line": 37,
@@ -11894,10 +11894,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.497653-06:00"
+          "created_at": "2025-10-11T22:38:17.100637-06:00"
         },
         {
-          "id": "chunk_721d0e70c9d9dba1785164ab3c187c74",
+          "id": "chunk_b76cdac77ca0277374bad29ef5093471",
           "content": "func (s *Server) handleHome(w http.ResponseWriter, r *http.Request) {\n\tfmt.Fprintf(w, \"Hello, World!\")\n}",
           "start_line": 39,
           "end_line": 41,
@@ -12033,10 +12033,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.497677-06:00"
+          "created_at": "2025-10-11T22:38:17.100659-06:00"
         },
         {
-          "id": "chunk_dc908c7d9fde7180e7851f0d49f61139",
+          "id": "chunk_25ba21ffd5987238f7f216b9e86c6cfe",
           "content": "func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {\n\tfmt.Fprintf(w, \"OK\")\n}",
           "start_line": 43,
           "end_line": 45,
@@ -12172,19 +12172,19 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.497702-06:00"
+          "created_at": "2025-10-11T22:38:17.100683-06:00"
         }
       ],
       "size": 884,
       "language": "Go"
     },
     "utils/helpers.go": {
-      "file_path": "/Users/parker/code/clindex/tests/integration/resources/TestIndexingIntegration/utils/helpers.go",
-      "last_modified": "2025-10-06T22:48:13.188120844-06:00",
+      "file_path": "/Users/parker/code/local-index/tests/integration/resources/TestIndexingIntegration/utils/helpers.go",
+      "last_modified": "2025-10-11T22:38:12.868340548-06:00",
       "content_hash": "4fa91ca766afafa88ece739ea0935e034a01e67e0a00c4c8af31d4848a5b1f70",
       "chunks": [
         {
-          "id": "chunk_2670c5f47015678f4b68adcd89b27fa9",
+          "id": "chunk_25681e0cd5f0996221ba74791aff2517",
           "content": "package utils",
           "start_line": 1,
           "end_line": 1,
@@ -12320,10 +12320,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.894034-06:00"
+          "created_at": "2025-10-11T22:38:17.500192-06:00"
         },
         {
-          "id": "chunk_d28ecf78f9e02b06552371e332b23c3f",
+          "id": "chunk_8c174a850241c85ea73fd3bd3702ce50",
           "content": "import (",
           "start_line": 3,
           "end_line": 3,
@@ -12459,10 +12459,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.894048-06:00"
+          "created_at": "2025-10-11T22:38:17.500205-06:00"
         },
         {
-          "id": "chunk_054f21b1d3fe919d8a4a767e4c55c247",
+          "id": "chunk_4095104674a89e63f742750cad8e5170",
           "content": "\"crypto/rand\"",
           "start_line": 4,
           "end_line": 4,
@@ -12598,10 +12598,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.894055-06:00"
+          "created_at": "2025-10-11T22:38:17.500213-06:00"
         },
         {
-          "id": "chunk_d328b1271c2c0225f60fcd7e1056ed08",
+          "id": "chunk_71390b5a6e7fddab54e4ed5bcbd49680",
           "content": "\"encoding/hex\"",
           "start_line": 5,
           "end_line": 5,
@@ -12737,10 +12737,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.894061-06:00"
+          "created_at": "2025-10-11T22:38:17.500221-06:00"
         },
         {
-          "id": "chunk_895b9d93ab01e6aaff295a8311046602",
+          "id": "chunk_0dc11fdd154cbe42b51523053d8626e6",
           "content": "\"fmt\"",
           "start_line": 6,
           "end_line": 6,
@@ -12876,10 +12876,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.894067-06:00"
+          "created_at": "2025-10-11T22:38:17.500227-06:00"
         },
         {
-          "id": "chunk_b716a5a24c5db23bec66fb50a0174f0a",
+          "id": "chunk_bb98b943cbd8cff489d1a638b1c1f09d",
           "content": "\"log\"",
           "start_line": 7,
           "end_line": 7,
@@ -13015,10 +13015,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.894074-06:00"
+          "created_at": "2025-10-11T22:38:17.500234-06:00"
         },
         {
-          "id": "chunk_9bb732c674a348f92164ef64b3543563",
+          "id": "chunk_5eb594734c0e76473e1c60b14370ef05",
           "content": "\"regexp\"",
           "start_line": 8,
           "end_line": 8,
@@ -13154,10 +13154,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.89408-06:00"
+          "created_at": "2025-10-11T22:38:17.500242-06:00"
         },
         {
-          "id": "chunk_7a87ebb8fe705491431ac92b5af9abe5",
+          "id": "chunk_9dc3954efe2c3a13b9ac878d4f654b6a",
           "content": "\"strings\"",
           "start_line": 9,
           "end_line": 9,
@@ -13293,10 +13293,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.894087-06:00"
+          "created_at": "2025-10-11T22:38:17.500251-06:00"
         },
         {
-          "id": "chunk_0e0be65e3f5488300355304370dc0b36",
+          "id": "chunk_fbe705b9d5367c86b4fdb4c957a48292",
           "content": "\"time\"",
           "start_line": 10,
           "end_line": 10,
@@ -13432,10 +13432,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.894093-06:00"
+          "created_at": "2025-10-11T22:38:17.500257-06:00"
         },
         {
-          "id": "chunk_065e5d50c0af19f081123b9a698aee68",
+          "id": "chunk_d90dc788ed30a01aabc5e569dbe4578d",
           "content": ")",
           "start_line": 11,
           "end_line": 11,
@@ -13571,10 +13571,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.8941-06:00"
+          "created_at": "2025-10-11T22:38:17.500264-06:00"
         },
         {
-          "id": "chunk_aaa58adf64ba92daf5e0bf6a4c054fec",
+          "id": "chunk_0a317062f5bdf30ba9c81481452c9ca8",
           "content": "func GenerateID() string {\n\tbytes := make([]byte, 16)\n\trand.Read(bytes)\n\treturn hex.EncodeToString(bytes)\n}",
           "start_line": 13,
           "end_line": 17,
@@ -13710,10 +13710,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.894135-06:00"
+          "created_at": "2025-10-11T22:38:17.500301-06:00"
         },
         {
-          "id": "chunk_1f8732dca8af237343ca93ca68d1d56e",
+          "id": "chunk_c599df84ac24edc6f55c70a65a3df646",
           "content": "func LogInfo(message string) {\n\tlog.Printf(\"[INFO] %s\", message)\n}",
           "start_line": 19,
           "end_line": 21,
@@ -13849,10 +13849,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.894157-06:00"
+          "created_at": "2025-10-11T22:38:17.500323-06:00"
         },
         {
-          "id": "chunk_371a795b7863e3f4ddc5591eae289ec2",
+          "id": "chunk_3934711fa9ea7f4d421b9a8c73000ece",
           "content": "func LogError(message string, err error) {\n\tlog.Printf(\"[ERROR] %s: %v\", message, err)\n}",
           "start_line": 23,
           "end_line": 25,
@@ -13988,10 +13988,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.894177-06:00"
+          "created_at": "2025-10-11T22:38:17.500343-06:00"
         },
         {
-          "id": "chunk_66aa10d275b9f4a3dbf9f7c0f2a9fb3e",
+          "id": "chunk_33fea69fb7e9a6b09bb1831971b5a723",
           "content": "func SanitizeInput(input string) string {\n\tsanitized := strings.ReplaceAll(input, \"\u003c\", \"\u0026lt;\")\n\tsanitized = strings.ReplaceAll(sanitized, \"\u003e\", \"\u0026gt;\")\n\treturn strings.TrimSpace(sanitized)\n}",
           "start_line": 27,
           "end_line": 32,
@@ -14127,10 +14127,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.894213-06:00"
+          "created_at": "2025-10-11T22:38:17.50038-06:00"
         },
         {
-          "id": "chunk_ddb02b6968c8d337077b0a7dcc087747",
+          "id": "chunk_dcb02f092d407cf04a3e17eefd458180",
           "content": "func ValidateEmail(email string) bool {\n\temailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$`)\n\treturn emailRegex.MatchString(email)\n}",
           "start_line": 34,
           "end_line": 37,
@@ -14266,10 +14266,10 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.894239-06:00"
+          "created_at": "2025-10-11T22:38:17.500407-06:00"
         },
         {
-          "id": "chunk_8ae7239a4d1cbb42a2bc54e41dacca82",
+          "id": "chunk_ecd8b21215683eb647666a29546bf25a",
           "content": "func FormatDuration(d time.Duration) string {\n\tif d \u003c time.Second {\n\t\treturn fmt.Sprintf(\"%.0fms\", float64(d.Nanoseconds())/1e6)\n\t}\n\tif d \u003c time.Minute {\n\t\treturn fmt.Sprintf(\"%.1fs\", d.Seconds())\n\t}\n\treturn fmt.Sprintf(\"%.1fm\", d.Minutes())\n}",
           "start_line": 39,
           "end_line": 47,
@@ -14405,7 +14405,7 @@
           ],
           "context": "",
           "language": "Go",
-          "created_at": "2025-10-06T22:48:17.894299-06:00"
+          "created_at": "2025-10-11T22:38:17.500467-06:00"
         }
       ],
       "size": 1014,

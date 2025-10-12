@@ -15,6 +15,7 @@ import (
 type IndexCommand struct {
 	indexingService *services.IndexingService
 	logger          *services.DefaultLogger
+	validator       *lib.DirectoryValidator
 }
 
 // NewIndexCommand creates a new index command
@@ -34,7 +35,8 @@ func NewIndexCommand() *IndexCommand {
 			logger,
 			options,
 		),
-		logger: logger,
+		logger:    logger,
+		validator: lib.NewDirectoryValidator(),
 	}
 }
 
@@ -46,14 +48,21 @@ func (cmd *IndexCommand) Execute(args []string) error {
 		return NewInvalidArgumentError("invalid index options", err)
 	}
 
-	// Get repository path (current directory by default)
-	repositoryPath, err := os.Getwd()
-	if err != nil {
-		return NewGeneralError("failed to get current directory", err)
+	// Determine target directory and validate it
+	targetDir := options.directory
+	if targetDir == "" {
+		// Use current directory for backward compatibility
+		targetDir, err = os.Getwd()
+		if err != nil {
+			return NewGeneralError("failed to get current directory", err)
+		}
 	}
 
-	// Determine index path
-	indexPath := cmd.getIndexPath(options.force)
+	// Validate the target directory
+	dirConfig, err := cmd.validator.ValidateDirectory(targetDir)
+	if err != nil {
+		return NewInvalidArgumentError("directory validation failed", err)
+	}
 
 	// Show progress
 	progressCallback := func(current, total int, filePath string) {
@@ -64,16 +73,38 @@ func (cmd *IndexCommand) Execute(args []string) error {
 		}
 	}
 
-	fmt.Printf("Indexing repository: %s\n", repositoryPath)
+	// Acquire file lock for indexing
+	lockFile, err := cmd.validator.GetFileUtilities().AcquireLock(dirConfig.Path)
+	if err != nil {
+		return NewGeneralError("failed to acquire lock", err)
+	}
+	defer cmd.validator.GetFileUtilities().ReleaseLock(lockFile)
 
-	// Perform indexing
+	// Perform indexing based on whether directory is specified
 	start := time.Now()
-	result, err := cmd.indexingService.IndexRepository(
-		repositoryPath,
-		indexPath,
-		options.force,
-		progressCallback,
-	)
+	var result *services.IndexingResult
+
+	if options.directory != "" {
+		// Index specified directory using validated config
+		fmt.Printf("Indexing directory: %s\n", dirConfig.Path)
+		result, err = cmd.indexingService.IndexDirectory(
+			dirConfig.Path,
+			options.force,
+			progressCallback,
+		)
+	} else {
+		// Index current directory (backward compatibility)
+		indexPath := cmd.getIndexPath(options.force)
+		fmt.Printf("Indexing repository: %s\n", dirConfig.Path)
+
+		result, err = cmd.indexingService.IndexRepository(
+			dirConfig.Path,
+			indexPath,
+			options.force,
+			progressCallback,
+		)
+	}
+
 	if err != nil {
 		fmt.Printf("\n")
 		return NewGeneralError("indexing failed", err)
@@ -100,6 +131,7 @@ type IndexOptions struct {
 	maxFileSize     int64
 	verbose         bool
 	quiet           bool
+	directory       string
 }
 
 // parseIndexOptions parses command line options for index
@@ -166,6 +198,13 @@ func (cmd *IndexCommand) parseIndexOptions(args []string) (IndexOptions, error) 
 		case "--quiet", "-q":
 			options.quiet = true
 			options.verbose = false
+
+		case "--dir", "-d":
+			if i+1 >= len(args) {
+				return options, NewInvalidArgumentError("--dir requires a directory path", nil)
+			}
+			options.directory = args[i+1]
+			i++
 
 		case "--help", "-h":
 			cmd.printIndexHelp()
@@ -259,6 +298,7 @@ Options:
   -t, --file-types <types>     Specify file types to include (comma-separated)
   -e, --exclude <patterns>    Exclude patterns (comma-separated)
   -s, --max-file-size <size>  Maximum file size in bytes (default: 1MB)
+  -d, --dir <directory>       Specify directory to index (default: current directory)
   -v, --verbose               Show detailed progress and statistics
   -q, --quiet                 Suppress progress output
   -h, --help                  Show this help message
@@ -297,6 +337,9 @@ Examples:
   code-search index --file-types "*.go,*.js,*.py"
   code-search index --exclude "*.min.js,*.test.go"
   code-search index --max-file-size 2048000
+  code-search index --dir /path/to/my-project
+  code-search index --dir ../sibling-project --force
+  code-search index --dir ~/project --verbose
 
 Exit Codes:
   0        Indexing completed successfully
@@ -304,14 +347,17 @@ Exit Codes:
   2        Invalid arguments
 
 Index File:
-  The index is saved as '.code-search-index' in the current directory.
+  When no directory is specified, the index is saved as '.code-search-index'
+  in the current directory.
+  When using --dir <directory>, the index is saved in a '.clindex' subdirectory
+  within the specified directory.
   Use --force to overwrite an existing index.
 `)
 }
 
 // GetHelp returns help text for the index command
 func (cmd *IndexCommand) GetHelp() string {
-	return `index [options] - Index the current directory for searching
+	return `index [options] - Index the current directory or specified directory for searching
 
 Use 'code-search index --help' for detailed usage information.`
 }
