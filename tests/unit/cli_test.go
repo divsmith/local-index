@@ -1,14 +1,11 @@
 package unit
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
-
-	"code-search/src/lib"
 )
 
 // TestCLI_Run tests basic CLI functionality

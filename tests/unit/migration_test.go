@@ -313,7 +313,7 @@ func TestIndexMigrator_MigrateIndex(t *testing.T) {
 		}
 
 		// Perform migration
-		result, err := migrator.MigrateIndex(tempDir, false)
+		_, err := migrator.MigrateIndex(tempDir, false)
 		if err != nil {
 			t.Errorf("Expected no error migrating, got: %v", err)
 		}

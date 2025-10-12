@@ -1,14 +1,12 @@
 package unit
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
-	"syscall"
 	"testing"
-	"time"
 
 	"code-search/src/lib"
-	"code-search/src/models"
 )
 
 // TestFileUtilities_ResolvePath tests path resolution functionality

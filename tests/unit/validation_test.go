@@ -1,13 +1,12 @@
 package unit
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"code-search/src/lib"
-	"code-search/src/models"
 )
 
 // TestDirectoryValidator_ValidateDirectory tests the ValidateDirectory method

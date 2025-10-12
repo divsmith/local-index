@@ -6,11 +6,11 @@ build:
 
 # Run all tests
 test:
-	go test -v ./...
+	go test -v ./src/... ./tests/unit/ ./tests/contract/
 
 # Run tests with coverage
 test-coverage:
-	go test -v -coverprofile=coverage.out ./...
+	go test -v -coverprofile=coverage.out ./src/... ./tests/unit/ ./tests/contract/
 	go tool cover -html=coverage.out -o coverage.html
 
 # Run linter
