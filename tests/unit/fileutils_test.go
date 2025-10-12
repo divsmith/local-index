@@ -57,8 +57,22 @@ func TestFileUtilities_ResolvePath(t *testing.T) {
 			t.Error("Expected absolute path for relative input")
 		}
 
-		if resolved != tempDir {
-			t.Errorf("Expected %s, got %s", tempDir, resolved)
+		// On macOS, temp directories can be symlinked from /var to /private
+		// So we resolve both paths to their canonical form before comparing
+		canonicalTempDir, err := filepath.EvalSymlinks(tempDir)
+		if err != nil {
+			// If EvalSymlinks fails, fall back to cleaned paths
+			canonicalTempDir = filepath.Clean(tempDir)
+		}
+
+		canonicalResolved, err := filepath.EvalSymlinks(resolved)
+		if err != nil {
+			// If EvalSymlinks fails, fall back to cleaned paths
+			canonicalResolved = filepath.Clean(resolved)
+		}
+
+		if canonicalResolved != canonicalTempDir {
+			t.Errorf("Expected %s, got %s", canonicalTempDir, canonicalResolved)
 		}
 	})
 
@@ -96,7 +110,8 @@ func TestFileUtilities_ValidatePathSecurity(t *testing.T) {
 
 	t.Run("Path traversal is detected", func(t *testing.T) {
 		tempDir := t.TempDir()
-		traversalPath := filepath.Join(tempDir, "safe", "..", "unsafe")
+		// Construct path with traversal using string concatenation to avoid automatic cleaning
+		traversalPath := tempDir + string(filepath.Separator) + "safe" + string(filepath.Separator) + ".." + string(filepath.Separator) + "unsafe"
 
 		err := fileUtils.ValidatePathSecurity(traversalPath, []string{tempDir})
 		if err == nil {

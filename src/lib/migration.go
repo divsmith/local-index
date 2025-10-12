@@ -117,19 +117,15 @@ func (m *IndexMigrator) MigrateIndex(directory string, force bool) (*MigrationRe
 
 	result.SourcePath = absDir
 
-	// Check if migration is needed
-	needsMigration, err := m.NeedsMigration(absDir)
-	if err != nil {
+	// Check if directory exists
+	if !m.fileUtils.DirectoryExists(absDir) {
 		result.Success = false
-		result.Errors = append(result.Errors, fmt.Sprintf("failed to check migration need: %v", err))
+		err := fmt.Errorf("directory '%s' does not exist", absDir)
+		result.Errors = append(result.Errors, err.Error())
 		return result, err
 	}
 
-	if !needsMigration {
-		return result, nil // Nothing to migrate
-	}
-
-	// Detect legacy indexes
+	// Detect legacy indexes first
 	legacyIndexes, err := m.DetectLegacyIndexes(absDir)
 	if err != nil {
 		result.Success = false
@@ -144,6 +140,18 @@ func (m *IndexMigrator) MigrateIndex(directory string, force bool) (*MigrationRe
 	// Create new index location
 	newIndexLoc := m.fileUtils.CreateIndexLocation(absDir)
 
+	// Check if target already has content and we're not forcing
+	if !force {
+		if m.fileUtils.DirectoryExists(newIndexLoc.IndexDir) {
+			entries, err := os.ReadDir(newIndexLoc.IndexDir)
+			if err == nil && len(entries) > 0 {
+				result.Success = false
+				result.Errors = append(result.Errors, "target index directory already exists and has content")
+				return result, fmt.Errorf("target index directory already exists and has content (use --force to overwrite)")
+			}
+		}
+	}
+
 	// Ensure target directory exists
 	if err := m.fileUtils.EnsureDirectory(newIndexLoc.IndexDir); err != nil {
 		result.Success = false
@@ -152,16 +160,6 @@ func (m *IndexMigrator) MigrateIndex(directory string, force bool) (*MigrationRe
 	}
 
 	result.TargetPath = newIndexLoc.IndexDir
-
-	// Check if target already has content and we're not forcing
-	if !force {
-		entries, err := os.ReadDir(newIndexLoc.IndexDir)
-		if err == nil && len(entries) > 0 {
-			result.Success = false
-			result.Errors = append(result.Errors, "target index directory already exists and has content")
-			return result, fmt.Errorf("target index directory already exists and has content (use --force to overwrite)")
-		}
-	}
 
 	// Migrate each legacy index file
 	for _, legacyFile := range legacyIndexes {
@@ -200,13 +198,8 @@ func (m *IndexMigrator) migrateLegacyFile(legacyFile string, newIndexLoc *models
 		return fmt.Errorf("failed to stat legacy file: %w", err)
 	}
 
-	// Determine target file name
+	// Determine target file name - preserve original filename for simplicity
 	targetFile := filepath.Join(newIndexLoc.IndexDir, filepath.Base(legacyFile))
-	if filepath.Base(legacyFile) == ".code-search-index" {
-		targetFile = newIndexLoc.IndexFile
-	} else if filepath.Base(legacyFile) == ".code-search-index.db" {
-		targetFile = newIndexLoc.MetadataFile
-	}
 
 	// Copy the file
 	if err := m.copyFile(legacyFile, targetFile); err != nil {

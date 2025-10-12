@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"code-search/src/models"
 )
 
@@ -79,29 +80,22 @@ func (v *DirectoryValidator) ValidateDirectory(path string) (*models.DirectoryCo
 
 // checkPermissions checks directory permissions
 func (v *DirectoryValidator) checkPermissions(path string) (*models.DirectoryPerms, error) {
-	// Check read permissions
+	// Get file info for the directory
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, fmt.Errorf("cannot access directory: %w", err)
+	}
+
+	mode := info.Mode()
+
+	// Check read permissions by trying to open the directory
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read directory: %w", err)
 	}
 	file.Close()
 
-	// Check if we can create files (write permissions)
-	testFile := filepath.Join(path, ".clindex_perm_test")
-	testHandle, err := os.Create(testFile)
-	if err != nil {
-		return nil, fmt.Errorf("cannot write to directory: %w", err)
-	}
-	testHandle.Close()
-	os.Remove(testFile)
-
-	// Get file mode to check execute permissions
-	info, err := os.Stat(path)
-	if err != nil {
-		return nil, fmt.Errorf("cannot check directory permissions: %w", err)
-	}
-
-	mode := info.Mode()
+	// Use file mode permissions instead of creating test files to avoid race conditions
 	perms := &models.DirectoryPerms{
 		CanRead:  mode.Perm()&0400 != 0, // Owner read
 		CanWrite: mode.Perm()&0200 != 0, // Owner write
@@ -176,6 +170,11 @@ func (v *DirectoryValidator) traditionalDirectoryScan(path string, info os.FileI
 		// Skip .clindex directories
 		if fileInfo.IsDir() && fileInfo.Name() == ".clindex" {
 			return filepath.SkipDir
+		}
+
+		// Skip permission test files to avoid race conditions
+		if strings.HasPrefix(fileInfo.Name(), ".clindex_perm_test_") {
+			return nil
 		}
 
 		if !fileInfo.IsDir() {

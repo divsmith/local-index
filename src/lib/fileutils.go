@@ -46,20 +46,40 @@ func (fu *FileUtilities) ResolvePath(path string) (string, error) {
 
 // ValidatePathSecurity performs security checks on a path
 func (fu *FileUtilities) ValidatePathSecurity(path string, allowedBasePaths []string) error {
-	// Check for path traversal attempts
+	// Resolve to absolute path first
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return fmt.Errorf("failed to resolve absolute path: %w", err)
+	}
+
+	// Clean the path
+	cleanPath := filepath.Clean(absPath)
+
+	// Check if the original path contains traversal patterns
 	if strings.Contains(path, "..") {
-		// Resolve the path and check if it stays within allowed bounds
-		cleanPath := filepath.Clean(path)
-		for _, basePath := range allowedBasePaths {
-			if strings.HasPrefix(cleanPath, basePath) {
-				return nil // Path is within allowed bounds
-			}
-		}
+		// Even if the cleaned path ends up in a safe location,
+		// the presence of ".." indicates a traversal attempt
 		return fmt.Errorf("path traversal detected: '%s'", path)
 	}
 
-	// Additional security checks can be added here
-	return nil
+	// Check if the path is within allowed base paths
+	for _, basePath := range allowedBasePaths {
+		// Resolve base path to absolute as well
+		absBasePath, err := filepath.Abs(basePath)
+		if err != nil {
+			continue // Skip invalid base paths
+		}
+
+		// Clean base path
+		cleanBasePath := filepath.Clean(absBasePath)
+
+		// Check if the path is within this base path
+		if strings.HasPrefix(cleanPath, cleanBasePath) {
+			return nil // Path is within allowed bounds
+		}
+	}
+
+	return fmt.Errorf("path '%s' is not within allowed base paths", path)
 }
 
 // GetDirectorySize calculates the total size of a directory

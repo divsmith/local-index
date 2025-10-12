@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"code-search/src/lib"
@@ -50,7 +51,7 @@ func TestDirectoryValidator_ValidateDirectory(t *testing.T) {
 		}
 
 		expectedMsg := "does not exist"
-		if err.Error()[:len(expectedMsg)] != expectedMsg {
+		if !strings.Contains(err.Error(), expectedMsg) {
 			t.Errorf("Expected error to contain '%s', got: %v", expectedMsg, err)
 		}
 	})
@@ -67,8 +68,8 @@ func TestDirectoryValidator_ValidateDirectory(t *testing.T) {
 			t.Error("Expected error for file path")
 		}
 
-		expectedMsg := "not a directory"
-		if err.Error()[:len(expectedMsg)] != expectedMsg {
+		expectedMsg := "is not a directory"
+		if !strings.Contains(err.Error(), expectedMsg) {
 			t.Errorf("Expected error to contain '%s', got: %v", expectedMsg, err)
 		}
 	})
@@ -131,16 +132,23 @@ func TestDirectoryValidator_ValidateDirectoryPermissions(t *testing.T) {
 	})
 
 	t.Run("Directory size calculation", func(t *testing.T) {
+		// Create a new temp directory for this test
+		sizeTestDir, err := os.MkdirTemp("", "size_test")
+		if err != nil {
+			t.Fatalf("Failed to create temp directory: %v", err)
+		}
+		defer os.RemoveAll(sizeTestDir)
+
 		// Create some test files
 		for i := 0; i < 5; i++ {
-			filePath := filepath.Join(tempDir, fmt.Sprintf("test_file_%d.txt", i))
+			filePath := filepath.Join(sizeTestDir, fmt.Sprintf("test_file_%d.txt", i))
 			content := []byte(fmt.Sprintf("test content %d", i))
 			if err := os.WriteFile(filePath, content, 0644); err != nil {
 				t.Fatalf("Failed to create test file: %v", err)
 			}
 		}
 
-		config, err := validator.ValidateDirectory(tempDir)
+		config, err := validator.ValidateDirectory(sizeTestDir)
 		if err != nil {
 			t.Errorf("Expected no error, got: %v", err)
 		}
@@ -155,8 +163,15 @@ func TestDirectoryValidator_ValidateDirectoryPermissions(t *testing.T) {
 	})
 
 	t.Run("Skips .clindex directories", func(t *testing.T) {
+		// Create a new temp directory for this test
+		clindexTestDir, err := os.MkdirTemp("", "clindex_test")
+		if err != nil {
+			t.Fatalf("Failed to create temp directory: %v", err)
+		}
+		defer os.RemoveAll(clindexTestDir)
+
 		// Create .clindex directory with files
-		clindexDir := filepath.Join(tempDir, ".clindex")
+		clindexDir := filepath.Join(clindexTestDir, ".clindex")
 		if err := os.MkdirAll(clindexDir, 0755); err != nil {
 			t.Fatalf("Failed to create .clindex directory: %v", err)
 		}
@@ -171,13 +186,13 @@ func TestDirectoryValidator_ValidateDirectoryPermissions(t *testing.T) {
 
 		// Add regular files
 		for i := 0; i < 2; i++ {
-			filePath := filepath.Join(tempDir, fmt.Sprintf("regular_file_%d.txt", i))
+			filePath := filepath.Join(clindexTestDir, fmt.Sprintf("regular_file_%d.txt", i))
 			if err := os.WriteFile(filePath, []byte("regular content"), 0644); err != nil {
 				t.Fatalf("Failed to create regular file: %v", err)
 			}
 		}
 
-		config, err := validator.ValidateDirectory(tempDir)
+		config, err := validator.ValidateDirectory(clindexTestDir)
 		if err != nil {
 			t.Errorf("Expected no error, got: %v", err)
 		}
