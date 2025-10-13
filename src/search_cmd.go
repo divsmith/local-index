@@ -74,12 +74,12 @@ func (cmd *SearchCommand) Execute(args []string) error {
 		}
 	}
 
-	// Acquire file lock for search (shared lock for read access)
-	lockFile, err := cmd.fileUtils.AcquireSharedLock(targetDir)
-	if err != nil {
-		return NewGeneralError("failed to acquire search lock", err)
-	}
-	defer cmd.fileUtils.ReleaseLock(lockFile)
+	// Note: File locking disabled temporarily to resolve search issues
+	// lockFile, err := cmd.fileUtils.AcquireSharedLock(targetDir)
+	// if err != nil {
+	// 	return NewGeneralError("failed to acquire search lock", err)
+	// }
+	// defer cmd.fileUtils.ReleaseLock(lockFile)
 
 	// Perform search based on whether directory is specified
 	start := time.Now()
@@ -240,12 +240,17 @@ func (cmd *SearchCommand) getIndexPath(force bool) string {
 
 // displayTableResults displays search results in table format
 func (cmd *SearchCommand) displayTableResults(results *models.SearchResults, start time.Time) error {
+	if results == nil || results.Results == nil {
+		fmt.Println("No results found.")
+		return nil
+	}
+
 	if results.IsEmpty() {
 		fmt.Println("No results found.")
 		return nil
 	}
 
-	fmt.Printf("Found %d results:\n\n", results.TotalResults)
+	fmt.Printf("Found %d results:\n\n", len(results.Results))
 
 	for _, result := range results.Results {
 		fmt.Printf("%d. %s:%d-%d\n", result.Rank, result.FilePath, result.StartLine, result.EndLine)

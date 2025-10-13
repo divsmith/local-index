@@ -23,6 +23,7 @@ type SearchResult struct {
 	Metadata       map[string]interface{} `json:"metadata"`
 	Rank           int                    `json:"rank"`
 	FoundAt        time.Time              `json:"found_at"`
+	Query          *SearchQuery           `json:"query,omitempty"` // Reference to the query that generated this result
 }
 
 // MatchType represents the type of match found
@@ -358,4 +359,15 @@ func calculateRelevanceScore(vectorDistance float64) float64 {
 		return 0.0
 	}
 	return 1.0 - vectorDistance
+}
+
+// EnhancedSearchResult is used internally for advanced result processing and ranking
+type EnhancedSearchResult struct {
+	*SearchResult
+	SemanticScore  float64   `json:"semantic_score"`
+	TextScore      float64   `json:"text_score"`
+	CombinedScore  float64   `json:"combined_score"`
+	SourceTypes    []string  `json:"source_types"`
+	MatchCount     int       `json:"match_count"`
+	FinalRelevance float64   `json:"final_relevance"`
 }

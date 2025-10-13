@@ -25,6 +25,7 @@ type WorkerPool struct {
 	mu           sync.RWMutex
 	stats        WorkerPoolStats
 	options      PoolOptions
+	pendingFutures map[int]*WorkFuture
 }
 
 // Worker represents a single worker goroutine
@@ -89,8 +90,8 @@ func DefaultPoolOptions() PoolOptions {
 	cpuCount := runtime.NumCPU()
 
 	return PoolOptions{
-		MinWorkers:      max(1, cpuCount/2),
-		MaxWorkers:      max(2, cpuCount*2),
+		MinWorkers:      maxInt(1, cpuCount/2),
+		MaxWorkers:      maxInt(2, cpuCount*2),
 		QueueSize:       1000,
 		HealthCheck:     30 * time.Second,
 		IdleTimeout:     60 * time.Second,
@@ -115,13 +116,14 @@ func NewWorkerPool(options PoolOptions) *WorkerPool {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	pool := &WorkerPool{
-		workQueue:   make(chan WorkItem, options.QueueSize),
-		resultQueue: make(chan WorkResult, options.QueueSize),
-		ctx:         ctx,
-		cancel:      cancel,
-		minWorkers:  options.MinWorkers,
-		maxWorkers:  options.MaxWorkers,
-		options:     options,
+		workQueue:      make(chan WorkItem, options.QueueSize),
+		resultQueue:    make(chan WorkResult, options.QueueSize),
+		ctx:            ctx,
+		cancel:         cancel,
+		minWorkers:     options.MinWorkers,
+		maxWorkers:     options.MaxWorkers,
+		options:        options,
+		pendingFutures: make(map[int]*WorkFuture),
 		stats: WorkerPoolStats{
 			LastUpdate: time.Now(),
 		},
@@ -160,14 +162,26 @@ func (p *WorkerPool) SubmitWithOptions(task func() (interface{}, error), priorit
 		done:   make(chan struct{}),
 	}
 
+	// Store the future before submitting work
+	p.mu.Lock()
+	p.pendingFutures[workID] = future
+	p.mu.Unlock()
+
 	select {
 	case p.workQueue <- workItem:
 		atomic.AddInt64(&p.stats.QueuedWork, 1)
 	case <-p.ctx.Done():
+		// Remove future from pending map
+		p.mu.Lock()
+		delete(p.pendingFutures, workID)
+		p.mu.Unlock()
 		future.error = p.ctx.Err()
 		close(future.done)
 	default:
-		// Queue is full
+		// Queue is full - remove future from pending map
+		p.mu.Lock()
+		delete(p.pendingFutures, workID)
+		p.mu.Unlock()
 		future.error = ErrQueueFull
 		close(future.done)
 	}
@@ -368,8 +382,13 @@ func (p *WorkerPool) monitor() {
 			p.updateStats()
 
 		case result := <-p.resultQueue:
-			// Process results (this could be extended with result callbacks)
-			_ = result
+			// Complete the corresponding future
+			p.mu.Lock()
+			if future, exists := p.pendingFutures[result.WorkID]; exists {
+				future.setResult(result.Result, result.Error)
+				delete(p.pendingFutures, result.WorkID)
+			}
+			p.mu.Unlock()
 
 		case <-p.ctx.Done():
 			return
@@ -389,10 +408,10 @@ func (p *WorkerPool) adjustWorkerCount() {
 
 	if queueLength > 10 && currentWorkers < p.maxWorkers {
 		// Add workers if queue is backing up
-		targetWorkers = min(currentWorkers+2, p.maxWorkers)
+		targetWorkers = minInt(currentWorkers+2, p.maxWorkers)
 	} else if queueLength == 0 && currentWorkers > p.minWorkers {
 		// Remove idle workers
-		targetWorkers = max(currentWorkers-1, p.minWorkers)
+		targetWorkers = maxInt(currentWorkers-1, p.minWorkers)
 	}
 
 	// Adjust worker count
@@ -444,6 +463,14 @@ func (p *WorkerPool) GetStats() WorkerPoolStats {
 func (p *WorkerPool) Stop(timeout time.Duration) error {
 	p.cancel()
 
+	// Complete any pending futures with cancellation error
+	p.mu.Lock()
+	for workID, future := range p.pendingFutures {
+		future.setResult(nil, ErrPoolClosed)
+		delete(p.pendingFutures, workID)
+	}
+	p.mu.Unlock()
+
 	done := make(chan struct{})
 	go func() {
 		p.wg.Wait()
@@ -461,6 +488,15 @@ func (p *WorkerPool) Stop(timeout time.Duration) error {
 // Close immediately closes the worker pool
 func (p *WorkerPool) Close() {
 	p.cancel()
+
+	// Complete any pending futures with cancellation error
+	p.mu.Lock()
+	for workID, future := range p.pendingFutures {
+		future.setResult(nil, ErrPoolClosed)
+		delete(p.pendingFutures, workID)
+	}
+	p.mu.Unlock()
+
 	p.wg.Wait()
 }
 
@@ -469,8 +505,8 @@ func (p *WorkerPool) Resize(minWorkers, maxWorkers int) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	p.minWorkers = max(1, minWorkers)
-	p.maxWorkers = max(p.minWorkers, maxWorkers)
+	p.minWorkers = maxInt(1, minWorkers)
+	p.maxWorkers = maxInt(p.minWorkers, maxWorkers)
 }
 
 // Errors
@@ -491,16 +527,17 @@ func (e *PoolError) Error() string {
 }
 
 // Helper functions
-func min(a, b int) int {
+func maxInt(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func minInt(a, b int) int {
 	if a < b {
 		return a
 	}
 	return b
 }
 
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}

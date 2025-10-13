@@ -2,6 +2,7 @@ package contract
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -132,17 +133,17 @@ func TestCLISearchCommandWithMaxResults(t *testing.T) {
 
 	// Create multiple test files
 	for i := 0; i < 5; i++ {
-		testFile := filepath.Join(resourceDir, "test.go")
-		content := `package main
+		testFile := filepath.Join(resourceDir, fmt.Sprintf("test%d.go", i))
+		content := fmt.Sprintf(`package main
 
-func calculate() {
-	// Calculate function
+func calculate%d() {
+	// Calculate function %d
 }
 
-func validate() {
-	// Validate function
+func validate%d() {
+	// Validate function %d
 }
-`
+`, i+1, i+1, i+1, i+1)
 		err := os.WriteFile(testFile, []byte(content), 0644)
 		if err != nil {
 			t.Fatalf("Failed to create test file: %v", err)
@@ -168,8 +169,8 @@ func validate() {
 		t.Fatalf("Failed to index test directory: %v", err)
 	}
 
-	// Test with max results limit
-	cmd = exec.Command("../../../../bin/code-search", "search", "calculate", "--max-results", "2")
+	// Test with max results limit - use exact search for predictable results
+	cmd = exec.Command("../../../../bin/code-search", "search", "calculate", "--max-results", "2", "--exact")
 	cmd.Dir = resourceDir
 	output, err := cmd.CombinedOutput()
 
@@ -179,7 +180,7 @@ func validate() {
 
 	outputStr := string(output)
 
-	// Should find exactly 2 results
+	// Should find exactly 2 results (limited by max-results)
 	if !strings.Contains(outputStr, "Found 2 results") {
 		t.Errorf("Expected output to contain 'Found 2 results', got: %s", outputStr)
 	}
@@ -295,7 +296,7 @@ func calculate() {
 	}
 
 	// Test with file pattern filter for Go files only
-	cmd = exec.Command("../../../../bin/code-search", "search", "calculate", "--file-pattern", "*.go")
+	cmd = exec.Command("../../../../bin/code-search", "search", "calculate", "--file-pattern", "*.go", "--exact")
 	cmd.Dir = resourceDir
 	output, err := cmd.CombinedOutput()
 

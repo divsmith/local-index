@@ -153,8 +153,8 @@ func (sr *SearchResults) GetResultsByMatchType() map[MatchType][]*SearchResult {
 // LimitResults limits the number of results to the specified maximum
 func (sr *SearchResults) LimitResults(maxResults int) {
 	if maxResults >= 0 && len(sr.Results) > maxResults {
-		sr.Results = sr.Results[:maxResults]
 		sr.HasMore = sr.TotalResults > maxResults
+		sr.Results = sr.Results[:maxResults]
 	} else {
 		sr.HasMore = false
 	}

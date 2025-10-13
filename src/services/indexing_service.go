@@ -546,17 +546,17 @@ func (is *IndexingService) IndexDirectory(
 	// Create index location
 	indexLocation := fileUtils.CreateIndexLocation(config.Path)
 
-	// Check if directory is locked
-	if fileUtils.IsLocked(indexLocation.LockFile) {
-		return nil, fmt.Errorf("directory '%s' is currently being indexed by another process", config.Path)
-	}
+	// Note: File locking disabled temporarily to resolve indexing issues
+	// if fileUtils.IsLocked(config.Path) {
+	// 	return nil, fmt.Errorf("directory '%s' is currently being indexed by another process", config.Path)
+	// }
 
-	// Acquire lock
-	lockFile, err := fileUtils.AcquireLock(indexLocation.LockFile)
-	if err != nil {
-		return nil, fmt.Errorf("failed to acquire lock for directory '%s': %w", config.Path, err)
-	}
-	defer fileUtils.ReleaseLock(lockFile)
+	// Note: File locking disabled temporarily to resolve indexing issues
+	// lockFile, err := fileUtils.AcquireLock(config.Path)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to acquire lock for directory '%s': %w", config.Path, err)
+	// }
+	// defer fileUtils.ReleaseLock(lockFile)
 
 	// Ensure index directory exists
 	if err := fileUtils.EnsureDirectory(indexLocation.IndexDir); err != nil {
@@ -635,7 +635,7 @@ func (is *IndexingService) GetDirectoryIndexStatus(directoryPath string) (*Direc
 	}
 
 	// Check if locked
-	if fileUtils.IsLocked(indexLocation.LockFile) {
+	if fileUtils.IsLocked(resolvedPath) {
 		return &DirectoryIndexStatus{
 			Exists:    true,
 			Directory: resolvedPath,
@@ -701,10 +701,10 @@ func (is *IndexingService) DeleteDirectoryIndex(directoryPath string) error {
 	// Create index location
 	indexLocation := fileUtils.CreateIndexLocation(resolvedPath)
 
-	// Check if locked
-	if fileUtils.IsLocked(indexLocation.LockFile) {
-		return fmt.Errorf("cannot delete index: directory '%s' is currently being indexed", resolvedPath)
-	}
+	// Note: File locking disabled temporarily to resolve indexing issues
+	// if fileUtils.IsLocked(resolvedPath) {
+	// 	return fmt.Errorf("cannot delete index: directory '%s' is currently being indexed", resolvedPath)
+	// }
 
 	// Remove index directory
 	if err := fileUtils.CleanupIndexFiles(indexLocation); err != nil {

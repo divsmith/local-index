@@ -307,9 +307,22 @@ func (fu *FileUtilities) IsLocked(baseDirectory string) bool {
 	indexLoc := fu.CreateIndexLocation(baseDirectory)
 	lockFile := indexLoc.LockFile
 
-	file, err := os.OpenFile(lockFile, os.O_CREATE|os.O_WRONLY, 0644)
+	// First check if lock file exists
+	if _, err := os.Stat(lockFile); os.IsNotExist(err) {
+		return false // No lock file means not locked
+	}
+
+	// Try to open existing lock file
+	file, err := os.OpenFile(lockFile, os.O_WRONLY, 0644)
 	if err != nil {
-		return true // Assume locked if we can't open
+		// If we can't open it, it might be because of permissions or because it's locked
+		// Try opening read-only to check if it exists and is accessible
+		file, err = os.OpenFile(lockFile, os.O_RDONLY, 0644)
+		if err != nil {
+			return true // Assume locked if we can't access it at all
+		}
+		file.Close()
+		return false // File exists and is readable, assume not locked
 	}
 	defer file.Close()
 

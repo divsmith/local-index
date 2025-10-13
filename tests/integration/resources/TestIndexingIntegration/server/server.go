@@ -1,6 +1,7 @@
 package server
 
 import (
+	"code-search/tests/integration/resources/TestIndexingIntegration/config"
 	"context"
 	"fmt"
 	"net/http"

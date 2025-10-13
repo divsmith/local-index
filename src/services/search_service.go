@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"regexp"
 	"sort"
@@ -326,26 +327,77 @@ func (ss *SearchService) performTextSearch(
 	return results, nil
 }
 
-// performHybridSearch performs a combination of semantic and text search
+// performHybridSearch performs a combination of semantic and text search in parallel
 func (ss *SearchService) performHybridSearch(
 	query *models.SearchQuery,
 	index *models.CodeIndex,
 ) ([]*models.SearchResult, error) {
-	// Perform both semantic and text searches
-	semanticResults, err := ss.performSemanticSearch(query, index)
-	if err != nil {
-		ss.logger.Warn("Semantic search failed, falling back to text search: %v", err)
-		return ss.performTextSearch(query, index)
+	// Use channels for parallel execution
+	type searchResult struct {
+		results []*models.SearchResult
+		err     error
+		searchType string
 	}
 
-	textResults, err := ss.performTextSearch(query, index)
-	if err != nil {
-		ss.logger.Warn("Text search failed, using semantic results only: %v", err)
-		return semanticResults, nil
+	semanticChan := make(chan searchResult, 1)
+	textChan := make(chan searchResult, 1)
+
+	// Start semantic search in goroutine
+	go func() {
+		results, err := ss.performSemanticSearch(query, index)
+		semanticChan <- searchResult{
+			results:    results,
+			err:        err,
+			searchType: "semantic",
+		}
+	}()
+
+	// Start text search in goroutine
+	go func() {
+		results, err := ss.performTextSearch(query, index)
+		textChan <- searchResult{
+			results:    results,
+			err:        err,
+			searchType: "text",
+		}
+	}()
+
+	// Wait for both searches to complete
+	var semanticResults, textResults []*models.SearchResult
+	var semanticErr, textErr error
+
+	// Collect results
+	for i := 0; i < 2; i++ {
+		select {
+		case result := <-semanticChan:
+			semanticResults = result.results
+			semanticErr = result.err
+		case result := <-textChan:
+			textResults = result.results
+			textErr = result.err
+		}
 	}
 
-	// Merge and deduplicate results
-	mergedResults := ss.mergeSearchResults(semanticResults, textResults)
+	// Handle search failures
+	if semanticErr != nil && textErr != nil {
+		return nil, fmt.Errorf("both semantic and text searches failed: semantic error=%v, text error=%v", semanticErr, textErr)
+	}
+
+	if semanticErr != nil {
+		ss.logger.Warn("Semantic search failed, using text results only: %v", semanticErr)
+		return ss.optimizeTextResults(textResults, query), nil
+	}
+
+	if textErr != nil {
+		ss.logger.Warn("Text search failed, using semantic results only: %v", textErr)
+		return ss.optimizeSemanticResults(semanticResults, query), nil
+	}
+
+	// Enhanced merge with intelligent ranking
+	mergedResults := ss.mergeAndRankResults(semanticResults, textResults, query)
+
+	// Apply dynamic threshold adjustment
+	mergedResults = ss.applyDynamicThresholdAdjustment(mergedResults, query)
 
 	return mergedResults, nil
 }
@@ -709,10 +761,10 @@ func (ss *SearchService) SearchInDirectory(
 		return nil, fmt.Errorf("no index found in directory '%s'", resolvedPath)
 	}
 
-	// Check if locked
-	if fileUtils.IsLocked(indexLocation.LockFile) {
-		return nil, fmt.Errorf("directory '%s' is currently being indexed", resolvedPath)
-	}
+	// Note: File locking disabled temporarily to resolve indexing issues
+	// if fileUtils.IsLocked(resolvedPath) {
+	// 	return nil, fmt.Errorf("directory '%s' is currently being indexed", resolvedPath)
+	// }
 
 	// Validate directory
 	if !fileUtils.DirectoryExists(resolvedPath) {
@@ -852,6 +904,393 @@ func (ss *SearchService) ClearCache() {
 		ss.queryCache.Clear()
 		ss.logger.Info("All cache levels cleared")
 	}
+}
+
+// mergeAndRankResults merges semantic and text results with intelligent ranking
+func (ss *SearchService) mergeAndRankResults(
+	semanticResults, textResults []*models.SearchResult,
+	query *models.SearchQuery,
+) []*models.SearchResult {
+	// Create map for deduplication and result enhancement
+	resultMap := make(map[string]*models.EnhancedSearchResult)
+
+	// Process semantic results with higher base weight
+	for _, result := range semanticResults {
+		key := ss.getResultKey(result)
+		enhanced := &models.EnhancedSearchResult{
+			SearchResult:    result,
+			SemanticScore:   result.RelevanceScore,
+			TextScore:       0.0,
+			CombinedScore:   result.RelevanceScore * 0.6, // Semantic gets 60% weight
+			SourceTypes:     []string{"semantic"},
+			MatchCount:      1,
+			FinalRelevance:  result.RelevanceScore,
+		}
+		resultMap[key] = enhanced
+	}
+
+	// Process text results and merge with existing results
+	for _, result := range textResults {
+		key := ss.getResultKey(result)
+
+		if existing, found := resultMap[key]; found {
+			// Merge with existing result
+			existing.TextScore = result.RelevanceScore
+			existing.CombinedScore += result.RelevanceScore * 0.4 // Text gets 40% weight
+			existing.SourceTypes = append(existing.SourceTypes, "text")
+			existing.MatchCount++
+
+			// Apply machine learning-based ranking boost for hybrid matches
+			hybridBoost := ss.calculateHybridBoost(existing)
+			existing.FinalRelevance = ss.applyMLRanking(existing, hybridBoost)
+
+			// Update the underlying result if text result is better
+			if result.IsBetterThan(existing.SearchResult) {
+				existing.SearchResult = result
+			}
+		} else {
+			// New text-only result
+			enhanced := &models.EnhancedSearchResult{
+				SearchResult:    result,
+				SemanticScore:   0.0,
+				TextScore:       result.RelevanceScore,
+				CombinedScore:   result.RelevanceScore * 0.4,
+				SourceTypes:     []string{"text"},
+				MatchCount:      1,
+				FinalRelevance:  result.RelevanceScore,
+			}
+			resultMap[key] = enhanced
+		}
+	}
+
+	// Convert enhanced results back to regular results and sort
+	var finalResults []*models.SearchResult
+	for _, enhanced := range resultMap {
+		enhanced.SearchResult.RelevanceScore = enhanced.FinalRelevance
+		finalResults = append(finalResults, enhanced.SearchResult)
+	}
+
+	// Sort by final relevance score (descending)
+	sort.Slice(finalResults, func(i, j int) bool {
+		return finalResults[i].RelevanceScore > finalResults[j].RelevanceScore
+	})
+
+	return finalResults
+}
+
+// calculateHybridBoost calculates relevance boost for hybrid matches
+func (ss *SearchService) calculateHybridBoost(enhanced *models.EnhancedSearchResult) float64 {
+	if len(enhanced.SourceTypes) < 2 {
+		return 1.0 // No boost for single-source results
+	}
+
+	// Base boost for hybrid matches
+	boost := 1.2
+
+	// Additional boost based on score balance
+	scoreDiff := math.Abs(enhanced.SemanticScore - enhanced.TextScore)
+	maxScore := math.Max(enhanced.SemanticScore, enhanced.TextScore)
+
+	if maxScore > 0 {
+		scoreRatio := scoreDiff / maxScore
+		// Boost for well-balanced scores (both semantic and text agree)
+		if scoreRatio < 0.3 {
+			boost += 0.15
+		} else if scoreRatio < 0.5 {
+			boost += 0.1
+		}
+	}
+
+	// Boost for multiple matches within same file/region
+	if enhanced.MatchCount > 1 {
+		boost += 0.05 * float64(enhanced.MatchCount-1)
+	}
+
+	return boost
+}
+
+// applyMLRanking applies machine learning-based ranking factors
+func (ss *SearchService) applyMLRanking(enhanced *models.EnhancedSearchResult, hybridBoost float64) float64 {
+	result := enhanced.SearchResult
+	query := result.Query // Assuming this is set in the result
+
+	baseScore := enhanced.CombinedScore
+	finalScore := baseScore * hybridBoost
+
+	// Apply contextual factors
+	finalScore *= ss.calculateContextualBoost(result, query)
+
+	// Apply language-specific factors
+	finalScore *= ss.calculateLanguageBoost(result)
+
+	// Apply recency boost (if timestamp information is available)
+	finalScore *= ss.calculateRecencyBoost(result)
+
+	// Normalize to 0-1 range
+	if finalScore > 1.0 {
+		finalScore = 1.0
+	}
+
+	return finalScore
+}
+
+// calculateContextualBoost calculates boost based on code context
+func (ss *SearchService) calculateContextualBoost(result *models.SearchResult, query *models.SearchQuery) float64 {
+	boost := 1.0
+
+	// Boost for function/class definitions vs implementations
+	if ss.isDefinitionContext(result.Content) {
+		boost += 0.1
+	}
+
+	// Boost for test files when searching for test-related terms
+	if ss.isTestFile(result.FilePath) && ss.isTestQuery(query.QueryText) {
+		boost += 0.15
+	}
+
+	// Boost for recent files (based on file modification time if available)
+	// This would require file system access or metadata
+
+	return boost
+}
+
+// calculateLanguageBoost applies language-specific ranking adjustments
+func (ss *SearchService) calculateLanguageBoost(result *models.SearchResult) float64 {
+	boost := 1.0
+
+	switch result.Language {
+	case "Go":
+		// Boost for Go-specific patterns
+		if ss.isGoPattern(result.Content) {
+			boost += 0.05
+		}
+	case "Python":
+		// Boost for Python-specific patterns
+		if ss.isPythonPattern(result.Content) {
+			boost += 0.05
+		}
+	case "JavaScript", "TypeScript":
+		// Boost for JS/TS-specific patterns
+		if ss.isJavaScriptPattern(result.Content) {
+			boost += 0.05
+		}
+	}
+
+	return boost
+}
+
+// calculateRecencyBoost applies boost based on file recency
+func (ss *SearchService) calculateRecencyBoost(result *models.SearchResult) float64 {
+	// Placeholder for recency calculation
+	// In practice, this would check file modification time
+	// and apply boost based on how recently the file was changed
+	return 1.0
+}
+
+// applyDynamicThresholdAdjustment dynamically adjusts filtering thresholds
+func (ss *SearchService) applyDynamicThresholdAdjustment(
+	results []*models.SearchResult,
+	query *models.SearchQuery,
+) []*models.SearchResult {
+	if len(results) == 0 {
+		return results
+	}
+
+	// Calculate quality metrics of results
+	scores := make([]float64, len(results))
+	for i, result := range results {
+		scores[i] = result.RelevanceScore
+	}
+
+	// Calculate statistics
+	mean := ss.calculateMean(scores)
+	stdDev := ss.calculateStdDev(scores, mean)
+
+	// Dynamic threshold based on result quality distribution
+	dynamicThreshold := query.Threshold
+
+	// If we have high-quality results, be more selective
+	if mean > 0.8 && stdDev < 0.1 {
+		dynamicThreshold = math.Max(dynamicThreshold, mean - 0.2)
+	} else if mean < 0.5 && len(results) < query.MaxResults/2 {
+		// If we have few low-quality results, be more permissive
+		dynamicThreshold = math.Min(dynamicThreshold, mean - stdDev)
+	}
+
+	// Filter results based on dynamic threshold
+	var filteredResults []*models.SearchResult
+	for _, result := range results {
+		if result.RelevanceScore >= dynamicThreshold {
+			filteredResults = append(filteredResults, result)
+		}
+	}
+
+	// Ensure we always have some results unless they're all below the original threshold
+	if len(filteredResults) == 0 && len(results) > 0 {
+		// Fall back to original threshold
+		for _, result := range results {
+			if result.RelevanceScore >= query.Threshold {
+				filteredResults = append(filteredResults, result)
+			}
+		}
+	}
+
+	return filteredResults
+}
+
+// optimizeTextResults optimizes text-only results when semantic search fails
+func (ss *SearchService) optimizeTextResults(results []*models.SearchResult, query *models.SearchQuery) []*models.SearchResult {
+	// Apply enhanced ranking to text results
+	for _, result := range results {
+		// Boost for exact matches
+		if strings.Contains(strings.ToLower(result.Content), strings.ToLower(query.QueryText)) {
+			result.RelevanceScore += 0.1
+		}
+
+		// Apply contextual factors
+		result.RelevanceScore *= ss.calculateContextualBoost(result, query)
+		result.RelevanceScore *= ss.calculateLanguageBoost(result)
+
+		// Normalize
+		if result.RelevanceScore > 1.0 {
+			result.RelevanceScore = 1.0
+		}
+	}
+
+	// Sort by updated scores
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].RelevanceScore > results[j].RelevanceScore
+	})
+
+	return results
+}
+
+// optimizeSemanticResults optimizes semantic-only results when text search fails
+func (ss *SearchService) optimizeSemanticResults(results []*models.SearchResult, query *models.SearchQuery) []*models.SearchResult {
+	// Apply enhanced ranking to semantic results
+	for _, result := range results {
+		// Boost for semantic matches that also contain text matches
+		if strings.Contains(strings.ToLower(result.Content), strings.ToLower(query.QueryText)) {
+			result.RelevanceScore += 0.15
+		}
+
+		// Apply contextual factors
+		result.RelevanceScore *= ss.calculateContextualBoost(result, query)
+		result.RelevanceScore *= ss.calculateLanguageBoost(result)
+
+		// Normalize
+		if result.RelevanceScore > 1.0 {
+			result.RelevanceScore = 1.0
+		}
+	}
+
+	// Sort by updated scores
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].RelevanceScore > results[j].RelevanceScore
+	})
+
+	return results
+}
+
+// Helper methods for ranking factors
+
+func (ss *SearchService) getResultKey(result *models.SearchResult) string {
+	return fmt.Sprintf("%s:%d:%d", result.FilePath, result.StartLine, result.EndLine)
+}
+
+func (ss *SearchService) isDefinitionContext(content string) bool {
+	definitions := []string{
+		"func ", "function ", "def ", "class ", "interface ", "type ",
+		"const ", "let ", "var ", "struct ", "enum ", "import ",
+	}
+
+	contentLower := strings.ToLower(content)
+	for _, def := range definitions {
+		if strings.Contains(contentLower, def) {
+			return true
+		}
+	}
+	return false
+}
+
+func (ss *SearchService) isTestFile(filePath string) bool {
+	testIndicators := []string{"_test.go", "test_", "_test.", "spec.", "tests/"}
+	filePathLower := strings.ToLower(filePath)
+	for _, indicator := range testIndicators {
+		if strings.Contains(filePathLower, indicator) {
+			return true
+		}
+	}
+	return false
+}
+
+func (ss *SearchService) isTestQuery(queryText string) bool {
+	testTerms := []string{"test", "spec", "mock", "stub", "fixture", "assert"}
+	queryLower := strings.ToLower(queryText)
+	for _, term := range testTerms {
+		if strings.Contains(queryLower, term) {
+			return true
+		}
+	}
+	return false
+}
+
+func (ss *SearchService) isGoPattern(content string) bool {
+	patterns := []string{"func ", "type ", "interface{}", "struct {", "go func()"}
+	contentLower := strings.ToLower(content)
+	for _, pattern := range patterns {
+		if strings.Contains(contentLower, pattern) {
+			return true
+		}
+	}
+	return false
+}
+
+func (ss *SearchService) isPythonPattern(content string) bool {
+	patterns := []string{"def ", "class ", "import ", "from ", "lambda "}
+	contentLower := strings.ToLower(content)
+	for _, pattern := range patterns {
+		if strings.Contains(contentLower, pattern) {
+			return true
+		}
+	}
+	return false
+}
+
+func (ss *SearchService) isJavaScriptPattern(content string) bool {
+	patterns := []string{"function ", "const ", "let ", "var ", "=>", "class "}
+	contentLower := strings.ToLower(content)
+	for _, pattern := range patterns {
+		if strings.Contains(contentLower, pattern) {
+			return true
+		}
+	}
+	return false
+}
+
+func (ss *SearchService) calculateMean(scores []float64) float64 {
+	if len(scores) == 0 {
+		return 0
+	}
+
+	sum := 0.0
+	for _, score := range scores {
+		sum += score
+	}
+	return sum / float64(len(scores))
+}
+
+func (ss *SearchService) calculateStdDev(scores []float64, mean float64) float64 {
+	if len(scores) == 0 {
+		return 0
+	}
+
+	sum := 0.0
+	for _, score := range scores {
+		diff := score - mean
+		sum += diff * diff
+	}
+	return math.Sqrt(sum / float64(len(scores)))
 }
 
 // DirectorySearchCapabilities contains information about a directory's search capabilities

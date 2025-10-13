@@ -27,6 +27,8 @@ type InMemoryVectorStore struct {
 	transMutex    sync.RWMutex
 	poolManager   *PoolManager
 	vectorPool    *VectorPool
+	hnswIndex     *HNSWIndex // HNSW index for approximate nearest neighbor search
+	useHNSW       bool       // Flag to enable/disable HNSW
 }
 
 // VectorEntry represents a vector entry with metadata
@@ -67,6 +69,11 @@ type BatchResult struct {
 
 // NewInMemoryVectorStore creates a new in-memory vector store
 func NewInMemoryVectorStore(indexPath string) *InMemoryVectorStore {
+	return NewInMemoryVectorStoreWithHNSW(indexPath, true)
+}
+
+// NewInMemoryVectorStoreWithHNSW creates a new in-memory vector store with optional HNSW
+func NewInMemoryVectorStoreWithHNSW(indexPath string, enableHNSW bool) *InMemoryVectorStore {
 	// Initialize pool manager
 	poolManager := GetPoolManager()
 
@@ -78,6 +85,13 @@ func NewInMemoryVectorStore(indexPath string) *InMemoryVectorStore {
 		transactions: make(map[int64]*Transaction),
 		poolManager:  poolManager,
 		vectorPool:   poolManager.GetVectorPool(),
+		useHNSW:      enableHNSW,
+	}
+
+	// Initialize HNSW index if enabled
+	if enableHNSW {
+		config := DefaultHNSWConfig()
+		store.hnswIndex = NewHNSWIndex(config, poolManager)
 	}
 
 	// Try to load existing data
@@ -115,6 +129,14 @@ func (s *InMemoryVectorStore) Insert(id string, vector []float64, metadata map[s
 	}
 
 	s.vectors[id] = entry
+
+	// Insert into HNSW index if enabled
+	if s.useHNSW && s.hnswIndex != nil {
+		if err := s.hnswIndex.Insert(id, vector, metadata); err != nil {
+			// Log error but don't fail the insert
+			// This could be enhanced with proper logging
+		}
+	}
 
 	// Persist to file if path is set
 	if s.path != "" {
@@ -170,6 +192,14 @@ func (s *InMemoryVectorStore) BatchInsert(entries []VectorEntry) (*BatchResult, 
 
 		s.vectors[entry.ID] = newEntry
 		result.SuccessCount++
+
+		// Insert into HNSW index if enabled
+		if s.useHNSW && s.hnswIndex != nil {
+			if err := s.hnswIndex.Insert(entry.ID, entry.Vector, entry.Metadata); err != nil {
+				// Log error but don't fail the insert
+				// This could be enhanced with proper logging
+			}
+		}
 	}
 
 	// Persist to file if path is set
@@ -342,9 +372,6 @@ func (s *InMemoryVectorStore) RollbackTransaction(transID int64) error {
 
 // Search performs vector similarity search
 func (s *InMemoryVectorStore) Search(queryVector []float64, limit int) ([]models.VectorSearchResult, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
 	if len(queryVector) == 0 {
 		return nil, fmt.Errorf("query vector cannot be empty")
 	}
@@ -352,6 +379,15 @@ func (s *InMemoryVectorStore) Search(queryVector []float64, limit int) ([]models
 	if limit <= 0 {
 		limit = 10
 	}
+
+	// Use HNSW for approximate search if enabled and available
+	if s.useHNSW && s.hnswIndex != nil {
+		return s.hnswIndex.Search(queryVector, limit)
+	}
+
+	// Fallback to exact search
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 
 	var results []models.VectorSearchResult
 
@@ -391,6 +427,14 @@ func (s *InMemoryVectorStore) Delete(id string) error {
 	defer s.mu.Unlock()
 
 	delete(s.vectors, id)
+
+	// Delete from HNSW index if enabled
+	if s.useHNSW && s.hnswIndex != nil {
+		if err := s.hnswIndex.Delete(id); err != nil {
+			// Log error but don't fail the delete
+			// This could be enhanced with proper logging
+		}
+	}
 
 	// Persist to file if path is set
 	if s.path != "" {
@@ -440,6 +484,19 @@ func (s *InMemoryVectorStore) GetPoolStats() PoolStats {
 		return s.vectorPool.GetStats()
 	}
 	return PoolStats{}
+}
+
+// GetHNSWStats returns HNSW index statistics
+func (s *InMemoryVectorStore) GetHNSWStats() HNSWStats {
+	if s.useHNSW && s.hnswIndex != nil {
+		return s.hnswIndex.GetStats()
+	}
+	return HNSWStats{}
+}
+
+// IsUsingHNSW returns whether HNSW is enabled
+func (s *InMemoryVectorStore) IsUsingHNSW() bool {
+	return s.useHNSW && s.hnswIndex != nil
 }
 
 // CleanupPools performs cleanup on memory pools
@@ -501,6 +558,17 @@ func (s *InMemoryVectorStore) loadFromFile() error {
 	}
 
 	s.vectors = vectors
+
+	// Rebuild HNSW index if enabled
+	if s.useHNSW && s.hnswIndex != nil {
+		for id, entry := range vectors {
+			if err := s.hnswIndex.Insert(id, entry.Vector, entry.Metadata); err != nil {
+				// Log error but don't fail the load
+				// This could be enhanced with proper logging
+			}
+		}
+	}
+
 	return nil
 }
 

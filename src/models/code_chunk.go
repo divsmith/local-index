@@ -10,14 +10,15 @@ import (
 
 // CodeChunk represents a segment of code that has been vectorized for search
 type CodeChunk struct {
-	ID        string    `json:"id"`
-	Content   string    `json:"content"`
-	StartLine int       `json:"start_line"`
-	EndLine   int       `json:"end_line"`
-	Vector    []float64 `json:"vector"`
-	Context   string    `json:"context"`
-	Language  string    `json:"language"`
-	CreatedAt time.Time `json:"created_at"`
+	ID        string                 `json:"id"`
+	Content   string                 `json:"content"`
+	StartLine int                    `json:"start_line"`
+	EndLine   int                    `json:"end_line"`
+	Vector    []float64              `json:"vector"`
+	Context   string                 `json:"context"`
+	Language  string                 `json:"language"`
+	Metadata  map[string]interface{} `json:"metadata"`
+	CreatedAt time.Time              `json:"created_at"`
 }
 
 // NewCodeChunk creates a new CodeChunk
@@ -30,6 +31,7 @@ func NewCodeChunk(content string, startLine, endLine int, language string) *Code
 		Vector:    make([]float64, 0), // Will be populated by indexing service
 		Context:   "",                 // Will be populated by indexing service
 		Language:  language,
+		Metadata:  make(map[string]interface{}),
 		CreatedAt: time.Now(),
 	}
 }
@@ -261,8 +263,8 @@ func (cc *CodeChunk) MergeWith(other *CodeChunk) (*CodeChunk, error) {
 		merged = true
 	} else if cc.StartLine <= other.EndLine && other.StartLine <= cc.EndLine {
 		// Chunks overlap - merge their content ranges
-		newStartLine = min(cc.StartLine, other.StartLine)
-		newEndLine = max(cc.EndLine, other.EndLine)
+		newStartLine = minInt(cc.StartLine, other.StartLine)
+		newEndLine = maxInt(cc.EndLine, other.EndLine)
 		newContent = cc.Content // Use the larger chunk's content
 		if len(other.Content) > len(cc.Content) {
 			newContent = other.Content
@@ -376,16 +378,17 @@ func generateChunkID(content string, startLine, endLine int) string {
 }
 
 // Helper functions
-func min(a, b int) int {
+func minInt(a, b int) int {
 	if a < b {
 		return a
 	}
 	return b
 }
 
-func max(a, b int) int {
+func maxInt(a, b int) int {
 	if a > b {
 		return a
 	}
 	return b
 }
+
