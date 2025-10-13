@@ -18,6 +18,7 @@ type SearchService struct {
 	vectorStore   models.VectorStore
 	logger        Logger
 	searchOptions SearchOptions
+	queryCache    *lib.QueryCache
 }
 
 // SearchOptions contains options for search operations
@@ -67,11 +68,22 @@ func NewSearchService(
 	logger Logger,
 	options SearchOptions,
 ) *SearchService {
+	// Initialize query cache with default values
+	l1Size := 1000  // In-memory cache entries
+	l2Size := 10000 // Disk-based cache entries
+	ttl := options.CacheTTL
+	if ttl == 0 {
+		ttl = 10 * time.Minute
+	}
+
+	queryCache := lib.NewQueryCache(l1Size, l2Size, ttl)
+
 	return &SearchService{
 		codeParser:    codeParser,
 		vectorStore:   vectorStore,
 		logger:        logger,
 		searchOptions: options,
+		queryCache:    queryCache,
 	}
 }
 
@@ -93,6 +105,16 @@ func (ss *SearchService) Search(
 	}
 	if query.Threshold == 0 {
 		query.Threshold = ss.searchOptions.DefaultThreshold
+	}
+
+	// Check cache first if enabled
+	if ss.searchOptions.CacheResults && ss.queryCache != nil {
+		if cachedResults, found := ss.queryCache.Get(query); found {
+			ss.logger.Debug("Cache hit for query: %s", query.GetSummary())
+			cachedResults.SetExecutionTime(time.Since(start))
+			return cachedResults, nil
+		}
+		ss.logger.Debug("Cache miss for query: %s", query.GetSummary())
 	}
 
 	ss.logger.Info("Performing search: %s", query.GetSummary())
@@ -129,6 +151,11 @@ func (ss *SearchService) Search(
 
 	// Set execution time
 	results.SetExecutionTime(time.Since(start))
+
+	// Cache the results if enabled
+	if ss.searchOptions.CacheResults && ss.queryCache != nil {
+		ss.queryCache.Put(query, results)
+	}
 
 	ss.logger.Info("Search completed: %d results found in %v", results.TotalResults, results.ExecutionTime)
 
@@ -800,6 +827,30 @@ func (ss *SearchService) getSupportedSearchTypes() []string {
 		string(models.SearchTypeRegex),
 		string(models.SearchTypeExact),
 		string(models.SearchTypeFuzzy),
+	}
+}
+
+// GetCacheStatistics returns the current cache performance statistics
+func (ss *SearchService) GetCacheStatistics() lib.CacheStatistics {
+	if ss.queryCache == nil {
+		return lib.CacheStatistics{}
+	}
+	return ss.queryCache.GetStatistics()
+}
+
+// GetCacheHitRates returns the hit rates for each cache level
+func (ss *SearchService) GetCacheHitRates() (l1Rate, l2Rate, l3Rate, overallRate float64) {
+	if ss.queryCache == nil {
+		return 0, 0, 0, 0
+	}
+	return ss.queryCache.GetHitRates()
+}
+
+// ClearCache clears all cache levels
+func (ss *SearchService) ClearCache() {
+	if ss.queryCache != nil {
+		ss.queryCache.Clear()
+		ss.logger.Info("All cache levels cleared")
 	}
 }
 

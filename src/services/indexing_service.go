@@ -20,6 +20,7 @@ type IndexingService struct {
 	vectorStore  models.VectorStore
 	logger       Logger
 	indexOptions models.IndexingOptions
+	workerPool   *lib.WorkerPool
 	mu           sync.RWMutex
 }
 
@@ -83,12 +84,34 @@ func NewIndexingService(
 	logger Logger,
 	options models.IndexingOptions,
 ) *IndexingService {
+	// Create dynamic worker pool with optimal configuration
+	poolOptions := lib.DefaultPoolOptions()
+
+	// Calculate optimal worker counts
+	minWorkers := 1
+	if options.MaxConcurrency > 2 {
+		minWorkers = options.MaxConcurrency / 2
+	}
+
+	maxWorkers := 2
+	if options.MaxConcurrency > 1 {
+		maxWorkers = options.MaxConcurrency * 2
+	}
+
+	poolOptions.MinWorkers = minWorkers
+	poolOptions.MaxWorkers = maxWorkers
+	poolOptions.QueueSize = 1000
+	poolOptions.EnableMetrics = true
+
+	workerPool := lib.NewWorkerPool(poolOptions)
+
 	return &IndexingService{
 		fileScanner:  fileScanner,
 		codeParser:   codeParser,
 		vectorStore:  vectorStore,
 		logger:       logger,
 		indexOptions: options,
+		workerPool:   workerPool,
 	}
 }
 
@@ -214,7 +237,7 @@ type FileProcessingResult struct {
 	ChunkCount int
 }
 
-// processFileBatch processes a batch of files with controlled concurrency
+// processFileBatch processes a batch of files using the dynamic worker pool
 func (is *IndexingService) processFileBatch(
 	fileBatch []string,
 	codeIndex *models.CodeIndex,
@@ -223,59 +246,60 @@ func (is *IndexingService) processFileBatch(
 	totalFiles int,
 	progressCallback ProgressCallback,
 ) error {
-	// Create channel for concurrent processing within batch
-	fileChan := make(chan string, len(fileBatch))
-	resultChan := make(chan FileProcessingResult, len(fileBatch))
+	// Create tasks for the worker pool
+	tasks := make([]func() (interface{}, error), len(fileBatch))
 
-	// Start worker goroutines for this batch (limit concurrency to prevent memory spikes)
-	batchWorkers := is.indexOptions.MaxConcurrency
-	if batchWorkers > len(fileBatch) {
-		batchWorkers = len(fileBatch)
-	}
-
-	var wg sync.WaitGroup
-	for i := 0; i < batchWorkers; i++ {
-		wg.Add(1)
-		go is.processFileWorker(fileChan, resultChan, codeIndex, &wg)
-	}
-
-	// Send files to workers
-	go func() {
-		for _, file := range fileBatch {
-			fileChan <- file
+	for i, filePath := range fileBatch {
+		// Capture the file path in a closure
+		filePath := filePath
+		tasks[i] = func() (interface{}, error) {
+			return is.processFileWithPool(filePath, codeIndex)
 		}
-		close(fileChan)
-	}()
+	}
 
-	// Wait for all workers to finish
-	go func() {
-		wg.Wait()
-		close(resultChan)
-	}()
+	// Submit all tasks to worker pool
+	futures := is.workerPool.SubmitBatch(tasks)
 
-	// Process results from this batch
-	for fileResult := range resultChan {
+	// Process results as they complete
+	for i, future := range futures {
+		fileResult, err := future.Get()
 		*processedFiles++
 
-		if fileResult.Error != nil {
-			result.Errors = append(result.Errors, fmt.Sprintf("Failed to process %s: %v", fileResult.FilePath, fileResult.Error))
+		var processingResult FileProcessingResult
+		if err != nil {
+			processingResult = FileProcessingResult{
+				FilePath: fileBatch[i],
+				Error:    fmt.Errorf("worker pool error: %w", err),
+			}
+		} else {
+			processingResult = fileResult.(FileProcessingResult)
+		}
+
+		// Update result statistics
+		if processingResult.Error != nil {
+			result.Errors = append(result.Errors, fmt.Sprintf("Failed to process %s: %v", processingResult.FilePath, processingResult.Error))
 			result.FilesSkipped++
-		} else if fileResult.Skipped {
+		} else if processingResult.Skipped {
 			result.FilesSkipped++
-			is.logger.Debug("Skipped file: %s (%s)", fileResult.FilePath, fileResult.SkipReason)
+			is.logger.Debug("Skipped file: %s (%s)", processingResult.FilePath, processingResult.SkipReason)
 		} else {
 			result.FilesIndexed++
-			result.ChunksCreated += fileResult.ChunkCount
-			is.logger.Debug("Processed file: %s (%d chunks)", fileResult.FilePath, fileResult.ChunkCount)
+			result.ChunksCreated += processingResult.ChunkCount
+			is.logger.Debug("Processed file: %s (%d chunks)", processingResult.FilePath, processingResult.ChunkCount)
 		}
 
 		// Report progress
 		if progressCallback != nil {
-			progressCallback(*processedFiles, totalFiles, fileResult.FilePath)
+			progressCallback(*processedFiles, totalFiles, processingResult.FilePath)
 		}
 	}
 
 	return nil
+}
+
+// processFileWithPool processes a single file for use with the worker pool
+func (is *IndexingService) processFileWithPool(filePath string, codeIndex *models.CodeIndex) (interface{}, error) {
+	return is.processFile(filePath, codeIndex), nil
 }
 
 // processFileWorker processes files from the file channel
@@ -688,6 +712,23 @@ func (is *IndexingService) DeleteDirectoryIndex(directoryPath string) error {
 	}
 
 	is.logger.Info("Directory index deleted: %s", resolvedPath)
+	return nil
+}
+
+// GetWorkerPoolStats returns statistics about the worker pool
+func (is *IndexingService) GetWorkerPoolStats() lib.WorkerPoolStats {
+	if is.workerPool == nil {
+		return lib.WorkerPoolStats{}
+	}
+	return is.workerPool.GetStats()
+}
+
+// Close gracefully shuts down the indexing service
+func (is *IndexingService) Close(timeout time.Duration) error {
+	if is.workerPool != nil {
+		is.logger.Info("Shutting down worker pool...")
+		return is.workerPool.Stop(timeout)
+	}
 	return nil
 }
 

@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"code-search/src/models"
@@ -15,9 +16,17 @@ import (
 // InMemoryVectorStore is an in-memory implementation of VectorStore
 // This is a simplified implementation for demonstration purposes
 type InMemoryVectorStore struct {
-	vectors map[string]*VectorEntry
-	mu      sync.RWMutex
-	path    string // For persistence
+	vectors       map[string]*VectorEntry
+	mu            sync.RWMutex
+	path          string    // For persistence
+	batchBuffer   []*VectorEntry // Buffer for batch operations
+	batchSize     int
+	batchMutex    sync.Mutex
+	transactionID int64
+	transactions  map[int64]*Transaction
+	transMutex    sync.RWMutex
+	poolManager   *PoolManager
+	vectorPool    *VectorPool
 }
 
 // VectorEntry represents a vector entry with metadata
@@ -28,11 +37,47 @@ type VectorEntry struct {
 	Created  time.Time              `json:"created"`
 }
 
+// BatchOperation represents a batch operation
+type BatchOperation struct {
+	Type      string      `json:"type"` // "insert", "update", "delete"
+	ID        string      `json:"id"`
+	Vector    []float64   `json:"vector,omitempty"`
+	Metadata  map[string]interface{} `json:"metadata,omitempty"`
+	Timestamp time.Time   `json:"timestamp"`
+}
+
+// Transaction represents a transaction for atomic operations
+type Transaction struct {
+	ID         int64           `json:"id"`
+	Operations []BatchOperation `json:"operations"`
+	Status     string          `json:"status"` // "active", "committed", "rolled_back"
+	CreatedAt  time.Time       `json:"created_at"`
+	UpdatedAt  time.Time       `json:"updated_at"`
+	snapshot   map[string]*VectorEntry // Snapshot for rollback
+	store      *InMemoryVectorStore
+}
+
+// BatchResult represents the result of a batch operation
+type BatchResult struct {
+	SuccessCount int      `json:"success_count"`
+	FailedCount  int      `json:"failed_count"`
+	Errors       []string `json:"errors"`
+	Duration     time.Duration `json:"duration"`
+}
+
 // NewInMemoryVectorStore creates a new in-memory vector store
 func NewInMemoryVectorStore(indexPath string) *InMemoryVectorStore {
+	// Initialize pool manager
+	poolManager := GetPoolManager()
+
 	store := &InMemoryVectorStore{
-		vectors: make(map[string]*VectorEntry),
-		path:    indexPath,
+		vectors:      make(map[string]*VectorEntry),
+		path:         indexPath,
+		batchBuffer:  make([]*VectorEntry, 0),
+		batchSize:    100,
+		transactions: make(map[int64]*Transaction),
+		poolManager:  poolManager,
+		vectorPool:   poolManager.GetVectorPool(),
 	}
 
 	// Try to load existing data
@@ -52,9 +97,13 @@ func (s *InMemoryVectorStore) Insert(id string, vector []float64, metadata map[s
 		return fmt.Errorf("vector cannot be empty")
 	}
 
+	// Use vector pool to allocate storage
+	pooledVector := s.vectorPool.GetVector(len(vector))
+	defer s.vectorPool.PutVector(pooledVector) // Return to pool when done
+
 	entry := &VectorEntry{
 		ID:       id,
-		Vector:   make([]float64, len(vector)),
+		Vector:   make([]float64, len(vector)), // Still allocate for persistent storage
 		Metadata: make(map[string]interface{}),
 		Created:  time.Now(),
 	}
@@ -71,6 +120,222 @@ func (s *InMemoryVectorStore) Insert(id string, vector []float64, metadata map[s
 	if s.path != "" {
 		return s.saveToFile()
 	}
+
+	return nil
+}
+
+// BatchInsert inserts multiple vectors atomically
+func (s *InMemoryVectorStore) BatchInsert(entries []VectorEntry) (*BatchResult, error) {
+	start := time.Now()
+	result := &BatchResult{
+		Errors: make([]string, 0),
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// Pre-allocate temporary vectors from pool for processing
+	tempVectors := make([][]float64, 0, len(entries))
+	defer func() {
+		// Return all temporary vectors to pool
+		for _, vec := range tempVectors {
+			s.vectorPool.PutVector(vec)
+		}
+	}()
+
+	for _, entry := range entries {
+		if len(entry.Vector) == 0 {
+			result.FailedCount++
+			result.Errors = append(result.Errors, fmt.Sprintf("vector cannot be empty for ID: %s", entry.ID))
+			continue
+		}
+
+		// Get temporary vector from pool for processing
+		tempVec := s.vectorPool.GetVector(len(entry.Vector))
+		tempVectors = append(tempVectors, tempVec)
+		copy(tempVec, entry.Vector)
+
+		// Create a copy of the entry
+		newEntry := &VectorEntry{
+			ID:       entry.ID,
+			Vector:   make([]float64, len(entry.Vector)), // Persistent storage
+			Metadata: make(map[string]interface{}),
+			Created:  time.Now(),
+		}
+
+		copy(newEntry.Vector, entry.Vector)
+		for k, v := range entry.Metadata {
+			newEntry.Metadata[k] = v
+		}
+
+		s.vectors[entry.ID] = newEntry
+		result.SuccessCount++
+	}
+
+	// Persist to file if path is set
+	if s.path != "" {
+		if err := s.saveToFile(); err != nil {
+			return result, fmt.Errorf("failed to persist batch insert: %w", err)
+		}
+	}
+
+	result.Duration = time.Since(start)
+	return result, nil
+}
+
+// BeginTransaction starts a new transaction
+func (s *InMemoryVectorStore) BeginTransaction() *Transaction {
+	transID := atomic.AddInt64(&s.transactionID, 1)
+
+	// Create snapshot of current state
+	s.mu.RLock()
+	snapshot := make(map[string]*VectorEntry)
+	for id, entry := range s.vectors {
+		entryCopy := &VectorEntry{
+			ID:       entry.ID,
+			Vector:   make([]float64, len(entry.Vector)),
+			Metadata: make(map[string]interface{}),
+			Created:  entry.Created,
+		}
+		copy(entryCopy.Vector, entry.Vector)
+		for k, v := range entry.Metadata {
+			entryCopy.Metadata[k] = v
+		}
+		snapshot[id] = entryCopy
+	}
+	s.mu.RUnlock()
+
+	trans := &Transaction{
+		ID:         transID,
+		Operations: make([]BatchOperation, 0),
+		Status:     "active",
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
+		snapshot:   snapshot,
+		store:      s,
+	}
+
+	s.transMutex.Lock()
+	s.transactions[transID] = trans
+	s.transMutex.Unlock()
+
+	return trans
+}
+
+// CommitTransaction commits a transaction
+func (s *InMemoryVectorStore) CommitTransaction(transID int64) error {
+	s.transMutex.Lock()
+	trans, exists := s.transactions[transID]
+	if !exists {
+		s.transMutex.Unlock()
+		return fmt.Errorf("transaction not found: %d", transID)
+	}
+
+	if trans.Status != "active" {
+		s.transMutex.Unlock()
+		return fmt.Errorf("transaction not active: %s", trans.Status)
+	}
+
+	trans.Status = "committed"
+	trans.UpdatedAt = time.Now()
+	s.transMutex.Unlock()
+
+	// Execute all operations atomically
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for _, op := range trans.Operations {
+		switch op.Type {
+		case "insert":
+			entry := &VectorEntry{
+				ID:       op.ID,
+				Vector:   make([]float64, len(op.Vector)),
+				Metadata: make(map[string]interface{}),
+				Created:  op.Timestamp,
+			}
+			copy(entry.Vector, op.Vector)
+			for k, v := range op.Metadata {
+				entry.Metadata[k] = v
+			}
+			s.vectors[op.ID] = entry
+
+		case "update":
+			if existing, found := s.vectors[op.ID]; found {
+				entryCopy := &VectorEntry{
+					ID:       existing.ID,
+					Vector:   make([]float64, len(op.Vector)),
+					Metadata: make(map[string]interface{}),
+					Created:  existing.Created,
+				}
+				copy(entryCopy.Vector, op.Vector)
+				for k, v := range op.Metadata {
+					entryCopy.Metadata[k] = v
+				}
+				s.vectors[op.ID] = entryCopy
+			}
+
+		case "delete":
+			delete(s.vectors, op.ID)
+		}
+	}
+
+	// Persist to file if path is set
+	if s.path != "" {
+		if err := s.saveToFile(); err != nil {
+			return fmt.Errorf("failed to persist transaction: %w", err)
+		}
+	}
+
+	// Clean up transaction
+	s.transMutex.Lock()
+	delete(s.transactions, transID)
+	s.transMutex.Unlock()
+
+	return nil
+}
+
+// RollbackTransaction rolls back a transaction
+func (s *InMemoryVectorStore) RollbackTransaction(transID int64) error {
+	s.transMutex.Lock()
+	trans, exists := s.transactions[transID]
+	if !exists {
+		s.transMutex.Unlock()
+		return fmt.Errorf("transaction not found: %d", transID)
+	}
+
+	if trans.Status != "active" {
+		s.transMutex.Unlock()
+		return fmt.Errorf("transaction not active: %s", trans.Status)
+	}
+
+	trans.Status = "rolled_back"
+	trans.UpdatedAt = time.Now()
+	s.transMutex.Unlock()
+
+	// Restore snapshot
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// Clear current vectors and restore snapshot
+	s.vectors = make(map[string]*VectorEntry)
+	for id, entry := range trans.snapshot {
+		entryCopy := &VectorEntry{
+			ID:       entry.ID,
+			Vector:   make([]float64, len(entry.Vector)),
+			Metadata: make(map[string]interface{}),
+			Created:  entry.Created,
+		}
+		copy(entryCopy.Vector, entry.Vector)
+		for k, v := range entry.Metadata {
+			entryCopy.Metadata[k] = v
+		}
+		s.vectors[id] = entryCopy
+	}
+
+	// Clean up transaction
+	s.transMutex.Lock()
+	delete(s.transactions, transID)
+	s.transMutex.Unlock()
 
 	return nil
 }
@@ -169,6 +434,21 @@ func (s *InMemoryVectorStore) GetStats() VectorStoreStats {
 	return stats
 }
 
+// GetPoolStats returns memory pool statistics
+func (s *InMemoryVectorStore) GetPoolStats() PoolStats {
+	if s.vectorPool != nil {
+		return s.vectorPool.GetStats()
+	}
+	return PoolStats{}
+}
+
+// CleanupPools performs cleanup on memory pools
+func (s *InMemoryVectorStore) CleanupPools() {
+	if s.poolManager != nil {
+		s.poolManager.Cleanup()
+	}
+}
+
 // saveToFile saves the vector store to a file
 func (s *InMemoryVectorStore) saveToFile() error {
 	if s.path == "" {
@@ -251,6 +531,96 @@ type VectorStoreStats struct {
 	Dimensions  int    `json:"dimensions"`
 	TotalSize   int    `json:"total_size"`
 	Path        string `json:"path,omitempty"`
+}
+
+// Transaction Methods
+
+// Insert adds an insert operation to the transaction
+func (t *Transaction) Insert(id string, vector []float64, metadata map[string]interface{}) error {
+	if t.Status != "active" {
+		return fmt.Errorf("transaction not active: %s", t.Status)
+	}
+
+	op := BatchOperation{
+		Type:      "insert",
+		ID:        id,
+		Vector:    make([]float64, len(vector)),
+		Metadata:  make(map[string]interface{}),
+		Timestamp: time.Now(),
+	}
+
+	copy(op.Vector, vector)
+	for k, v := range metadata {
+		op.Metadata[k] = v
+	}
+
+	t.Operations = append(t.Operations, op)
+	t.UpdatedAt = time.Now()
+
+	return nil
+}
+
+// Update adds an update operation to the transaction
+func (t *Transaction) Update(id string, vector []float64, metadata map[string]interface{}) error {
+	if t.Status != "active" {
+		return fmt.Errorf("transaction not active: %s", t.Status)
+	}
+
+	op := BatchOperation{
+		Type:      "update",
+		ID:        id,
+		Vector:    make([]float64, len(vector)),
+		Metadata:  make(map[string]interface{}),
+		Timestamp: time.Now(),
+	}
+
+	copy(op.Vector, vector)
+	for k, v := range metadata {
+		op.Metadata[k] = v
+	}
+
+	t.Operations = append(t.Operations, op)
+	t.UpdatedAt = time.Now()
+
+	return nil
+}
+
+// Delete adds a delete operation to the transaction
+func (t *Transaction) Delete(id string) error {
+	if t.Status != "active" {
+		return fmt.Errorf("transaction not active: %s", t.Status)
+	}
+
+	op := BatchOperation{
+		Type:      "delete",
+		ID:        id,
+		Timestamp: time.Now(),
+	}
+
+	t.Operations = append(t.Operations, op)
+	t.UpdatedAt = time.Now()
+
+	return nil
+}
+
+// Commit commits the transaction
+func (t *Transaction) Commit() error {
+	return t.store.CommitTransaction(t.ID)
+}
+
+// Rollback rolls back the transaction
+func (t *Transaction) Rollback() error {
+	return t.store.RollbackTransaction(t.ID)
+}
+
+// GetOperationCount returns the number of operations in the transaction
+func (t *Transaction) GetOperationCount() int {
+	return len(t.Operations)
+}
+
+// GetStatus returns the current status of the transaction
+func (t *Transaction) GetStatus() string {
+	return t.Status
 }
 
 // MockVectorStore is a mock implementation for testing
