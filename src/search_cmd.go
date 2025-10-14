@@ -12,6 +12,11 @@ import (
 	"code-search/src/services"
 )
 
+// SearchServiceInterface defines the interface for search services
+type SearchServiceInterface interface {
+	Search(query *models.SearchQuery, indexPath string) (*models.SearchResults, error)
+}
+
 // SearchCommand implements the search command
 type SearchCommand struct {
 	searchService *services.SearchService
@@ -24,15 +29,18 @@ func NewSearchCommand() *SearchCommand {
 	// Create a silent logger for JSON output compatibility
 	silentLogger := &services.SilentLogger{}
 
+	// Create base search service
+	baseSearchService := services.NewSearchService(
+		lib.NewSimpleCodeParser(),
+		lib.NewInMemoryVectorStore(""),
+		silentLogger,
+		services.DefaultSearchOptions(),
+	)
+
 	return &SearchCommand{
-		searchService: services.NewSearchService(
-			lib.NewSimpleCodeParser(),
-			lib.NewInMemoryVectorStore(""),
-			silentLogger,
-			services.DefaultSearchOptions(),
-		),
-		logger:    silentLogger,
-		fileUtils: lib.NewFileUtilities(),
+		searchService: baseSearchService,
+		logger:        silentLogger,
+		fileUtils:     lib.NewFileUtilities(),
 	}
 }
 
@@ -65,6 +73,26 @@ func (cmd *SearchCommand) Execute(args []string) error {
 		query.SearchType = models.SearchTypeFuzzy
 	}
 
+	// Create embedding config if semantic search is enabled
+	var searchService SearchServiceInterface = cmd.searchService
+	if options.semantic || query.SearchType == models.SearchTypeSemantic || query.SearchType == models.SearchTypeHybrid {
+		embeddingConfig := lib.EmbeddingConfig{
+			ModelName:        options.modelName,
+			MaxBatchSize:     32,
+			CacheSize:        options.cacheSize,
+			MemoryLimit:      options.memoryLimit,
+			SemanticWeight:   0.7,
+			TextWeight:       0.3,
+		}
+
+		// Create enhanced search service with embedding support
+		enhancedService, err := services.NewEnhancedSearchServiceWithConfig(cmd.searchService, embeddingConfig)
+		if err != nil {
+			return NewGeneralError("failed to create enhanced search service", err)
+		}
+		searchService = enhancedService
+	}
+
 	// Determine target directory for locking
 	targetDir := options.directory
 	if targetDir == "" {
@@ -91,11 +119,11 @@ func (cmd *SearchCommand) Execute(args []string) error {
 		if err != nil {
 			return NewInvalidArgumentError("failed to resolve index location", err)
 		}
-		results, err = cmd.searchService.Search(query, indexPath)
+		results, err = searchService.Search(query, indexPath)
 	} else {
 		// Search current directory (backward compatibility)
 		indexPath := cmd.getIndexPath(options.force)
-		results, err = cmd.searchService.Search(query, indexPath)
+		results, err = searchService.Search(query, indexPath)
 	}
 
 	if err != nil {
@@ -119,30 +147,38 @@ func (cmd *SearchCommand) Execute(args []string) error {
 
 // SearchOptions contains search command options
 type SearchOptions struct {
-	maxResults  int
-	filePattern string
-	withContext bool
-	force       bool
-	format      string
-	threshold   float64
-	semantic    bool
-	exact       bool
-	fuzzy       bool
-	directory   string
+	maxResults    int
+	filePattern   string
+	withContext   bool
+	force         bool
+	format        string
+	threshold     float64
+	semantic      bool
+	exact         bool
+	fuzzy         bool
+	directory     string
+	modelName     string
+	embeddingPath string
+	cacheSize     int
+	memoryLimit   int64
 }
 
 // parseSearchOptions parses command line options for search
 func (cmd *SearchCommand) parseSearchOptions(args []string) (SearchOptions, error) {
 	options := SearchOptions{
-		maxResults:  10,
-		filePattern: "",
-		withContext: false,
-		force:       false,
-		format:      "table",
-		threshold:   0.7,
-		semantic:    false,
-		exact:       false,
-		fuzzy:       false,
+		maxResults:    10,
+		filePattern:   "",
+		withContext:   false,
+		force:         false,
+		format:        "table",
+		threshold:     0.7,
+		semantic:      false,
+		exact:         false,
+		fuzzy:         false,
+		modelName:     "all-MiniLM-L6-v2",
+		embeddingPath: "",
+		cacheSize:     1000,
+		memoryLimit:   200, // MB
 	}
 
 	for i := 0; i < len(args); i++ {
@@ -209,6 +245,42 @@ func (cmd *SearchCommand) parseSearchOptions(args []string) (SearchOptions, erro
 				return options, NewInvalidArgumentError("--dir requires a directory path", nil)
 			}
 			options.directory = args[i+1]
+			i++
+
+		case "--model", "-M":
+			if i+1 >= len(args) {
+				return options, NewInvalidArgumentError("--model requires a model name", nil)
+			}
+			options.modelName = args[i+1]
+			i++
+
+		case "--embedding-path":
+			if i+1 >= len(args) {
+				return options, NewInvalidArgumentError("--embedding-path requires a path", nil)
+			}
+			options.embeddingPath = args[i+1]
+			i++
+
+		case "--cache-size":
+			if i+1 >= len(args) {
+				return options, NewInvalidArgumentError("--cache-size requires a value", nil)
+			}
+			var cacheSize int
+			if _, err := fmt.Sscanf(args[i+1], "%d", &cacheSize); err != nil || cacheSize < 0 {
+				return options, NewInvalidArgumentError(fmt.Sprintf("invalid cache-size value: %s", args[i+1]), nil)
+			}
+			options.cacheSize = cacheSize
+			i++
+
+		case "--memory-limit":
+			if i+1 >= len(args) {
+				return options, NewInvalidArgumentError("--memory-limit requires a value", nil)
+			}
+			var memoryLimit int64
+			if _, err := fmt.Sscanf(args[i+1], "%d", &memoryLimit); err != nil || memoryLimit < 0 {
+				return options, NewInvalidArgumentError(fmt.Sprintf("invalid memory-limit value: %s", args[i+1]), nil)
+			}
+			options.memoryLimit = memoryLimit
 			i++
 
 		case "--help", "-h":
@@ -341,6 +413,10 @@ Options:
   -s, --semantic          Use semantic search
   -e, --exact             Use exact matching
   -z, --fuzzy             Use fuzzy matching
+  -M, --model <name>       Embedding model name (default: all-MiniLM-L6-v2)
+      --embedding-path     Path to external embedding model file
+      --cache-size <n>     Embedding cache size (default: 1000)
+      --memory-limit <mb>  Memory limit for embeddings in MB (default: 200)
   -h, --help              Show this help message
 
 Examples:
@@ -351,6 +427,9 @@ Examples:
   code-search search "TODO" --dir /path/to/my-project
   code-search search "class.*Controller" --dir ../sibling-project --format json
   code-search search "import.*react" --dir ~/frontend --max-results 10
+  code-search search "user login" --semantic --model all-MiniLM-L6-v2
+  code-search search "api endpoint" --model custom-model --embedding-path /path/to/model.onnx
+  code-search search "memory leak" --cache-size 2000 --memory-limit 500
 
 Output Formats:
   table    Human-readable table format (default)
@@ -361,6 +440,16 @@ Search Types:
   semantic Vector-based semantic search (default for combined search)
   exact    Exact phrase matching
   fuzzy    Fuzzy string matching
+
+Embedding Models:
+  all-MiniLM-L6-v2   Default multilingual model (384 dimensions)
+  custom-model        Custom model specified with --embedding-path
+
+Embedding Options:
+  --model              Select embedding model for semantic search
+  --embedding-path     Use external ONNX model file
+  --cache-size         Set embedding cache size for performance
+  --memory-limit       Limit memory usage for embeddings (MB)
 
 Exit Codes:
   0        Search completed successfully
