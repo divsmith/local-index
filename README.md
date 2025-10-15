@@ -1,22 +1,22 @@
-# Code Search - Local CLI Codebase Search
+# Code Search
 
-A fast, locally-run command-line tool for searching codebases. Built with Go for performance and minimal resource usage.
+Code Search is a fast, locally-run command-line tool for searching codebases. It provides multiple search methods including text, semantic, and pattern matching to help developers find code quickly and efficiently.
 
-## 🚀 Features
+## Features
 
-- **Fast Search**: Quick indexing and searching of codebases
-- **Multiple Search Types**: Text, semantic, regex, exact, fuzzy, and hybrid search
-- **AI-Powered Semantic Search**: Built-in embedding models for concept-based searching
-- **Advanced Caching**: Multi-level caching (L1 memory + L2 disk) for optimal performance
-- **Memory Efficient**: Configurable memory limits and intelligent cache management
-- **File Type Support**: Supports major programming languages and configuration files
-- **Multiple Embedding Models**: Support for custom ONNX models and built-in MiniLM
-- **Zero External Dependencies**: Single binary with embedded models
-- **Privacy First**: Everything runs locally, your code never leaves your machine
+- **Fast indexing and searching** of codebases
+- **Multiple search types**: text, semantic, regex, exact, fuzzy, and hybrid
+- **AI-powered semantic search** using embedded models for concept-based searching
+- **Advanced caching** with memory and disk storage for optimal performance
+- **Configurable memory limits** and intelligent cache management
+- **Support for major programming languages** and configuration files
+- **Custom ONNX embedding models** with built-in MiniLM
+- **Single binary** with zero external dependencies
+- **Privacy-focused** - everything runs locally on your machine
 
-## 📦 Installation
+## Installation
 
-### From Source
+### Install from Source
 
 ```bash
 git clone https://github.com/your-org/code-search.git
@@ -25,21 +25,21 @@ make build
 make install
 ```
 
-### Development Setup
+### Development
 
 ```bash
-make setup    # Install development dependencies (golangci-lint, goimports)
-make build    # Build the binary
-make test     # Run all tests (unit + contract + integration)
-make test-fast # Run fast tests only (skip integration)
-make test-coverage # Run tests with coverage report
-make install  # Install to GOPATH/bin
-make clean    # Clean build artifacts
-make fmt      # Format code
-make lint     # Run linter
+make setup         # Install development dependencies
+make build         # Build the binary
+make test          # Run all tests
+make test-fast     # Run fast tests only
+make test-coverage # Run tests with coverage
+make install       # Install to GOPATH/bin
+make clean         # Clean build artifacts
+make fmt           # Format code
+make lint          # Run linter
 ```
 
-## 🎯 Quick Start
+## Quick Start
 
 ```bash
 # Index your current directory
@@ -48,21 +48,21 @@ code-search index
 # Search for code patterns
 code-search search "user authentication"
 
-# Search with specific options
+# Search in specific files with result limits
 code-search search "database query" --file-pattern "*.go" --max-results 5
 
-# Semantic search (find similar concepts)
+# Semantic search finds similar concepts
 code-search search "error handling" --semantic
 
-# Fuzzy search (find similar strings)
+# Fuzzy search handles typos
 code-search search "UsreAuth" --fuzzy
 ```
 
-## 📖 Usage
+## Usage
 
 ### Indexing
 
-Index your codebase before searching:
+Index your codebase before searching. The tool indexes supported file types in the current directory and subdirectories, automatically excluding .git/, node_modules/, build artifacts, and temporary files.
 
 ```bash
 # Basic indexing
@@ -77,7 +77,7 @@ code-search index --quiet
 # Include hidden files
 code-search index --include-hidden
 
-# Verbose mode
+# Verbose mode with detailed progress
 code-search index --verbose
 
 # Specify file types
@@ -88,15 +88,10 @@ code-search index --exclude "*.min.js,node_modules/*"
 
 # Index a specific directory
 code-search index --dir /path/to/project
-
-# Help
-code-search index --help
 ```
 
-**What gets indexed:**
-- Supported file types in current directory and subdirectories
-- Automatically excludes .git/, node_modules/, build artifacts, and temporary files
-- Files up to 1MB in size by default
+**Index details:**
+- Files up to 1MB by default
 - Hidden files excluded by default
 - Index saved as `.code-search-index.db` in current directory
 
@@ -124,22 +119,22 @@ code-search search "controller" --dir /path/to/project
 # Exact phrase matching
 code-search search "UserAuthentication" --exact
 
-# Fuzzy string matching (forgives typos)
+# Fuzzy string matching forgives typos
 code-search search "UsreAuthenication" --fuzzy
 
 # Regular expression search
 code-search search "func.*Error" --regex
 
-# Semantic search (find similar concepts using AI embeddings)
+# Semantic search finds similar concepts using AI embeddings
 code-search search "data validation" --semantic
 
-# Hybrid search (default - combines semantic and text search)
+# Hybrid search (default) combines semantic and text search
 code-search search "payment processing"
 
-# Search with custom embedding model
+# Custom embedding model
 code-search search "machine learning" --semantic --model custom-model --embedding-path /path/to/model.onnx
 
-# Force search (use test index)
+# Force search uses test index
 code-search search "test function" --force
 ```
 
@@ -149,10 +144,10 @@ code-search search "test function" --force
 # Table format (default, human-readable)
 code-search search "database"
 
-# JSON format (for scripting)
+# JSON format for scripting
 code-search search "database" --format json
 
-# Raw format (file:line:content)
+# Raw format: file:line:content
 code-search search "database" --format raw
 ```
 
@@ -168,19 +163,19 @@ code-search search "algorithm" --threshold 0.8
 # Configure embedding cache size
 code-search search "authentication" --semantic --cache-size 2000
 
-# Set memory limit for embeddings (in MB)
+# Set memory limit for embeddings (MB)
 code-search search "database" --semantic --memory-limit 500
 
-# Search in specific directory
+# Search in specific directory with semantic mode
 code-search search "react component" --dir /path/to/frontend --semantic
 
-# Force search to use test index
+# Force search with JSON output
 code-search search "debug" --force --format json
 ```
 
-## 📋 Command Reference
+## Command Reference
 
-### `code-search index`
+### code-search index
 
 Index the current directory for searching.
 
@@ -199,7 +194,7 @@ Options:
   -h, --help                 Show help message
 ```
 
-### `code-search search`
+### code-search search
 
 Search the indexed codebase.
 
@@ -227,25 +222,24 @@ Options:
   -h, --help              Show help message
 ```
 
-## 🧠 Embedding & Semantic Search
+## Embedding and Semantic Search
 
 ### Overview
 
-Code search includes advanced semantic search capabilities powered by AI embeddings. This allows you to search for code based on concepts and meaning rather than just exact text matches.
+Code Search provides semantic search powered by AI embeddings, enabling you to find code based on concepts and meaning rather than exact text matches.
 
-### Built-in Embedding Model
+### Built-in Model
 
-The tool includes the **all-MiniLM-L6-v2** model embedded directly in the binary:
+The tool includes the **all-MiniLM-L6-v2** model embedded in the binary:
 
 - **Model**: Multilingual MiniLM (384-dimensional vectors)
-- **Size**: Embedded in binary (model file: all-MiniLM-L6-v2.onnx)
-- **Performance**: Optimized for code search scenarios
 - **Privacy**: Runs entirely locally, no external API calls
+- **Performance**: Optimized for code search scenarios
 
 ### Semantic Search Examples
 
 ```bash
-# Find code related to user authentication (even if it doesn't contain those exact words)
+# Find code related to user authentication (even without exact words)
 code-search search "user login validation" --semantic
 
 # Search for error handling patterns
@@ -260,30 +254,30 @@ code-search search "UI component state management" --semantic --file-pattern "*.
 
 ### Hybrid Search
 
-By default, the tool uses hybrid search that combines:
+By default, the tool uses hybrid search combining:
 
 - **Semantic Search** (70% weight): Finds conceptually similar code
 - **Text Search** (30% weight): Finds exact text matches
 
-This provides the best of both worlds - conceptual understanding with precise matching.
+This provides both conceptual understanding and precise matching.
 
-### Custom Embedding Models
+### Custom Models
 
-You can use custom ONNX models for specialized domains:
+Use custom ONNX models for specialized domains:
 
 ```bash
-# Use a custom model for a specific programming language
+# Custom model for specific programming language
 code-search search "algorithm" --semantic --model code-bert --embedding-path ./models/code-bert.onnx
 
 # Configure larger cache for better performance
 code-search search "data structure" --semantic --cache-size 5000 --memory-limit 1000
 ```
 
-### Performance Optimization
+### Performance
 
 #### Multi-Level Caching
 
-The embedding system uses advanced caching for optimal performance:
+The embedding system uses advanced caching:
 
 - **L1 Cache** (Memory): Fast access to frequently used embeddings
 - **L2 Cache** (Disk): Persistent storage for larger datasets
@@ -293,41 +287,32 @@ The embedding system uses advanced caching for optimal performance:
 #### Memory Management
 
 ```bash
-# Limit memory usage for embeddings (default: 200MB)
+# Limit memory usage (default: 200MB)
 code-search search "large dataset" --semantic --memory-limit 100
 
 # Increase cache size for better hit rates
 code-search search "frequent query" --semantic --cache-size 2000
 ```
 
-#### Cache Statistics
+### Supported File Types
 
-The system tracks comprehensive cache metrics:
-- L1/L2 hit rates
-- Memory usage
-- Disk usage
-- Average access times
-- Eviction statistics
-
-### Supported File Types for Semantic Search
-
-Semantic search works best with code files and includes enhanced understanding for:
+Semantic search works best with:
 
 - **Languages**: Go, Python, JavaScript, TypeScript, Java, C++, Rust, and more
 - **Config**: JSON, YAML, TOML, XML configuration files
-- **Documentation**: Markdown, text files with code examples
+- **Documentation**: Markdown and text files with code examples
 - **Web**: HTML, CSS, JSX, Vue components
 
 ### Model Compatibility
 
-The embedding system ensures model compatibility:
+The embedding system ensures compatibility:
 
 - **Metadata Storage**: Model information stored in index files
 - **Version Tracking**: Automatic model compatibility validation
 - **Migration**: Seamless handling of model updates
 - **Fallback**: Graceful degradation to text search if needed
 
-### Configuration Options
+### Configuration
 
 | Option | Default | Description |
 |--------|---------|-------------|
@@ -338,7 +323,7 @@ The embedding system ensures model compatibility:
 | `--threshold` | 0.7 | Similarity threshold (0.0-1.0) |
 | `--dir` | current directory | Target directory for search/index |
 
-## 🤝 Contributing
+## Contributing
 
 ### Development Setup
 
@@ -359,6 +344,6 @@ make build
 ./bin/code-search search "test"
 ```
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
