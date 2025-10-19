@@ -1,16 +1,16 @@
 {
-  "id": "idx_35055f1474f6a9db67aa4b2f70e2a899",
+  "id": "idx_dce82276cbb54308ca2532dd92ad28a8",
   "version": "1.0.0",
   "repository_path": "/Users/parker/code/local-index/tests/contract/resources/TestCLIIndexCommandWithForce",
-  "last_modified": "2025-10-18T20:14:46.721097-06:00",
+  "last_modified": "2025-10-18T20:53:37.452006-06:00",
   "file_entries": {
     "main.go": {
       "file_path": "/Users/parker/code/local-index/tests/contract/resources/TestCLIIndexCommandWithForce/main.go",
-      "last_modified": "2025-10-18T20:14:46.609306344-06:00",
+      "last_modified": "2025-10-18T20:53:37.28121863-06:00",
       "content_hash": "44931f233e59131035fb209925d9dc4f8ec580843b6326775a986958c5b5cf71",
       "chunks": [
         {
-          "id": "chunk_30fdaada709d7f4a528429f118ab717a",
+          "id": "chunk_49bddeeb0501b232ccad171267f0d638",
           "content": "package main",
           "start_line": 1,
           "end_line": 1,
@@ -147,10 +147,10 @@
           "context": "",
           "language": "Go",
           "metadata": {},
-          "created_at": "2025-10-18T20:14:46.720213-06:00"
+          "created_at": "2025-10-18T20:53:37.436949-06:00"
         },
         {
-          "id": "chunk_ac4b72de1100b279e743f85a83015015",
+          "id": "chunk_c6699be1b0b1bc351eac01310ed4f364",
           "content": "func main() {\n\tprintln(\"Hello World\")\n}",
           "start_line": 3,
           "end_line": 5,
@@ -287,7 +287,7 @@
           "context": "",
           "language": "Go",
           "metadata": {},
-          "created_at": "2025-10-18T20:14:46.720237-06:00"
+          "created_at": "2025-10-18T20:53:37.436976-06:00"
         }
       ],
       "size": 54,

@@ -57,6 +57,10 @@ func (cmd *SearchCommand) Execute(args []string) error {
 		return NewInvalidArgumentError("invalid search options", err)
 	}
 
+	// Analyze query to determine optimal search strategy
+	analyzer := lib.NewQueryAnalyzer()
+	queryType := analyzer.AnalyzeQuery(queryText)
+
 	// Create search query
 	query := models.NewSearchQuery(queryText)
 	query.MaxResults = options.maxResults
@@ -69,13 +73,27 @@ func (cmd *SearchCommand) Execute(args []string) error {
 		query.SmartFilter = false
 	}
 
-	// Set search type based on options
+	// Set search type based on explicit options first, then query analysis
 	if options.semantic {
 		query.SearchType = models.SearchTypeSemantic
 	} else if options.exact {
 		query.SearchType = models.SearchTypeExact
 	} else if options.fuzzy {
 		query.SearchType = models.SearchTypeFuzzy
+	} else {
+		// Use smart query routing based on analysis
+		switch queryType {
+		case lib.QueryTypeExact:
+			query.SearchType = models.SearchTypeExact
+		case lib.QueryTypeRegex:
+			query.SearchType = models.SearchTypeText // Use text search for regex patterns
+		case lib.QueryTypeSemantic:
+			query.SearchType = models.SearchTypeSemantic
+		case lib.QueryTypeHybrid:
+			query.SearchType = models.SearchTypeHybrid
+		default:
+			query.SearchType = models.SearchTypeHybrid // Default fallback
+		}
 	}
 
 	// Create embedding config if semantic search is enabled
