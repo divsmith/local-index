@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"code-search/src/models/util"
 )
 
 // SearchQuery represents a search request from the user
@@ -18,6 +20,7 @@ type SearchQuery struct {
 	Threshold      float64           `json:"threshold"`
 	SearchType     SearchType        `json:"search_type"`
 	Options        map[string]string `json:"options"`
+	SmartFilter    bool              `json:"smart_filter"`
 	CreatedAt      time.Time         `json:"created_at"`
 }
 
@@ -44,6 +47,7 @@ func NewSearchQuery(queryText string) *SearchQuery {
 		Threshold:      0.7,              // Default similarity threshold
 		SearchType:     SearchTypeHybrid, // Default to hybrid search
 		Options:        make(map[string]string),
+		SmartFilter:    true,             // Enable smart filtering by default for agents
 		CreatedAt:      time.Now(),
 	}
 }
@@ -211,7 +215,15 @@ func (sq *SearchQuery) GetBoostTerms() []string {
 
 // ShouldIncludeFile checks if a file should be included based on filters
 func (sq *SearchQuery) ShouldIncludeFile(filePath, language string) bool {
-	// Check file filter
+	// Apply smart filtering if enabled and no explicit file filter is set
+	if sq.SmartFilter && sq.FileFilter == "" {
+		filter := util.NewSmartFileFilter()
+		if !filter.ShouldInclude(filePath) {
+			return false
+		}
+	}
+
+	// Check explicit file filter (overrides smart filtering)
 	if sq.FileFilter != "" {
 		// Convert glob pattern to regex
 		regexPattern := sq.globToRegex(sq.FileFilter)

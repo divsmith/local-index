@@ -64,6 +64,11 @@ func (cmd *SearchCommand) Execute(args []string) error {
 	query.FileFilter = options.filePattern
 	query.Threshold = options.threshold
 
+	// Disable smart filtering if explicit file pattern is provided
+	if options.filePattern != "" {
+		query.SmartFilter = false
+	}
+
 	// Set search type based on options
 	if options.semantic {
 		query.SearchType = models.SearchTypeSemantic
@@ -166,7 +171,7 @@ type SearchOptions struct {
 // parseSearchOptions parses command line options for search
 func (cmd *SearchCommand) parseSearchOptions(args []string) (SearchOptions, error) {
 	options := SearchOptions{
-		maxResults:    10,
+		maxResults:    2,
 		filePattern:   "",
 		withContext:   false,
 		force:         false,
@@ -310,57 +315,19 @@ func (cmd *SearchCommand) getIndexPath(force bool) string {
 	return indexPath
 }
 
-// displayTableResults displays search results in table format
+// displayTableResults displays search results in minimal format for agents
 func (cmd *SearchCommand) displayTableResults(results *models.SearchResults, start time.Time) error {
 	if results == nil || results.Results == nil {
-		fmt.Println("No results found.")
 		return nil
 	}
 
 	if results.IsEmpty() {
-		fmt.Println("No results found.")
 		return nil
 	}
 
-	fmt.Printf("Found %d results:\n\n", len(results.Results))
-
+	// Agent-optimized minimal output: just file:line
 	for _, result := range results.Results {
-		fmt.Printf("%d. %s:%d-%d\n", result.Rank, result.FilePath, result.StartLine, result.EndLine)
-
-		// Display content with syntax highlighting (simplified)
-		content := result.Content
-		if len(content) > 100 {
-			content = content[:97] + "..."
-		}
-		fmt.Printf("   %s\n", content)
-
-		// Display highlights if any
-		if len(result.Highlights) > 0 {
-			highlights := strings.Join(result.Highlights, "; ")
-			if len(highlights) > 80 {
-				highlights = highlights[:77] + "..."
-			}
-			fmt.Printf("   Highlights: %s\n", highlights)
-		}
-
-		// Display context if available
-		if result.Context != "" && len(result.Context) < 200 {
-			contextLines := strings.Split(result.Context, "\n")
-			for _, line := range contextLines {
-				if strings.TrimSpace(line) != "" {
-					fmt.Printf("   %s\n", line)
-				}
-			}
-		}
-
-		fmt.Printf("   Score: %.3f | Type: %s\n", result.RelevanceScore, result.MatchType)
-		fmt.Println()
-	}
-
-	// Display summary
-	fmt.Printf("Search completed in %v\n", results.ExecutionTime)
-	if len(results.Results) != results.TotalResults {
-		fmt.Printf("Showing %d of %d results\n", len(results.Results), results.TotalResults)
+		fmt.Printf("%s:%d\n", result.FilePath, result.StartLine)
 	}
 
 	return nil
@@ -402,17 +369,19 @@ func (cmd *SearchCommand) printSearchHelp() {
 Arguments:
   <query>                  The search query text
 
-Options:
-  -m, --max-results <n>    Maximum number of results to return (default: 10)
-  -f, --file-pattern <p>   Filter results by file pattern (e.g., "*.go")
-  -c, --with-context       Include code context in results
-  -F, --force              Force search (use test index)
+Top Options for Agents:
+  --format json            Machine-readable output for parsing
+  -m, --max-results <n>    Number of results (default: 2)
+  -f, --file-pattern <p>   Include specific file types
+  -c, --with-context       Add code snippets when needed
+
+All Options:
   -d, --dir <directory>     Specify directory to search (default: current directory)
-      --format <fmt>       Output format: table, json, raw (default: table)
   -t, --threshold <t>      Similarity threshold (0.0-1.0, default: 0.7)
   -s, --semantic          Use semantic search
   -e, --exact             Use exact matching
   -z, --fuzzy             Use fuzzy matching
+  -F, --force              Force search (use test index)
   -M, --model <name>       Embedding model name (default: all-MiniLM-L6-v2)
       --embedding-path     Path to external embedding model file
       --cache-size <n>     Embedding cache size (default: 1000)
@@ -420,9 +389,12 @@ Options:
   -h, --help              Show this help message
 
 Examples:
-  code-search search "user authentication"
-  code-search search "calculate tax" --file-pattern "*.go" --max-results 5
-  code-search search "database query" --with-context --format json
+  # Agent-optimized usage
+  code-search search "database query" --format json
+  code-search search "calculate tax" --file-pattern "*.go"
+  code-search search "user authentication" --max-results 5 --with-context
+
+  # Advanced usage
   code-search search "function.*error" --semantic --threshold 0.8
   code-search search "TODO" --dir /path/to/my-project
   code-search search "class.*Controller" --dir ../sibling-project --format json
@@ -432,7 +404,7 @@ Examples:
   code-search search "memory leak" --cache-size 2000 --memory-limit 500
 
 Output Formats:
-  table    Human-readable table format (default)
+  table    Minimal file:line output (default, agent-optimized)
   json     Machine-readable JSON format
   raw      Simple file:line:line:content format
 
@@ -441,15 +413,9 @@ Search Types:
   exact    Exact phrase matching
   fuzzy    Fuzzy string matching
 
-Embedding Models:
-  all-MiniLM-L6-v2   Default multilingual model (384 dimensions)
-  custom-model        Custom model specified with --embedding-path
-
-Embedding Options:
-  --model              Select embedding model for semantic search
-  --embedding-path     Use external ONNX model file
-  --cache-size         Set embedding cache size for performance
-  --memory-limit       Limit memory usage for embeddings (MB)
+Smart Filtering:
+  By default, excludes test files, docs, vendor, and build artifacts.
+  Use --file-pattern to override or specify exact file patterns.
 
 Exit Codes:
   0        Search completed successfully
