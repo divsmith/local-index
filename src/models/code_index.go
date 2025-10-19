@@ -69,7 +69,45 @@ func LoadCodeIndex(indexPath string, vectorStore VectorStore) (*CodeIndex, error
 
 	index.vectorStore = vectorStore
 
+	// Populate vector store with vectors from all chunks
+	if err := index.populateVectorStore(); err != nil {
+		return nil, fmt.Errorf("failed to populate vector store: %w", err)
+	}
+
 	return &index, nil
+}
+
+// populateVectorStore inserts all chunk vectors into the vector store
+func (ci *CodeIndex) populateVectorStore() error {
+	ci.mu.RLock()
+	defer ci.mu.RUnlock()
+
+	for _, fileEntry := range ci.FileEntries {
+		for _, chunk := range fileEntry.Chunks {
+			// Convert float32 vector to float64 for vector store
+			vector := make([]float64, len(chunk.Vector))
+			for i, v := range chunk.Vector {
+				vector[i] = float64(v)
+			}
+
+			// Create metadata for the vector
+			metadata := map[string]interface{}{
+				"file_path":  fileEntry.FilePath,
+				"start_line": float64(chunk.StartLine),
+				"end_line":   float64(chunk.EndLine),
+				"content":    chunk.Content,
+				"language":   fileEntry.Language,
+				"chunk_id":   chunk.ID,
+			}
+
+			// Insert into vector store
+			if err := ci.vectorStore.Insert(chunk.ID, vector, metadata); err != nil {
+				return fmt.Errorf("failed to insert chunk %s: %w", chunk.ID, err)
+			}
+		}
+	}
+
+	return nil
 }
 
 // Save saves the index to disk

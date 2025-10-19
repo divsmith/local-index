@@ -114,21 +114,27 @@ func (cmd *SearchCommand) Execute(args []string) error {
 	// Create embedding config if semantic search is enabled
 	var searchService SearchServiceInterface = cmd.searchService
 	if options.semantic || query.SearchType == models.SearchTypeSemantic || query.SearchType == models.SearchTypeHybrid {
+		fmt.Fprintf(os.Stderr, "DEBUG: Query type requires enhanced search service: %v\n", query.SearchType)
 		embeddingConfig := lib.EmbeddingConfig{
 			ModelName:        options.modelName,
 			MaxBatchSize:     32,
-			CacheSize:        options.cacheSize,
-			MemoryLimit:      options.memoryLimit,
+			CacheSize:        100,  // Reduced cache size to prevent performance issues
+			MemoryLimit:      100, // Reduced memory limit
 			SemanticWeight:   0.7,
 			TextWeight:       0.3,
 		}
 
-		// Create enhanced search service with embedding support
+		// Create enhanced search service with real ONNX embedding support
+		fmt.Fprintf(os.Stderr, "DEBUG: Creating enhanced search service...\n")
 		enhancedService, err := services.NewEnhancedSearchServiceWithConfig(cmd.searchService, embeddingConfig)
 		if err != nil {
+			fmt.Fprintf(os.Stderr, "DEBUG: Failed to create enhanced search service: %v\n", err)
 			return NewGeneralError("failed to create enhanced search service", err)
 		}
+		fmt.Fprintf(os.Stderr, "DEBUG: Enhanced search service created successfully\n")
 		searchService = enhancedService
+	} else {
+		fmt.Fprintf(os.Stderr, "DEBUG: Using base search service\n")
 	}
 
 	// Determine target directory for locking
@@ -150,6 +156,7 @@ func (cmd *SearchCommand) Execute(args []string) error {
 	// Perform search based on whether directory is specified
 	start := time.Now()
 	var results *models.SearchResults
+	var indexPath string
 
 	if options.directory != "" {
 		// Search in specified directory - use centralized storage
@@ -157,22 +164,31 @@ func (cmd *SearchCommand) Execute(args []string) error {
 		if err != nil {
 			return NewInvalidArgumentError("failed to detect project root", err)
 		}
-		indexPath := cmd.storageManager.GetProjectIndexPath(projectRoot)
+		indexPath = cmd.storageManager.GetProjectIndexPath(projectRoot)
+		fmt.Fprintf(os.Stderr, "DEBUG: Searching in directory %s, indexPath: %s\n", options.directory, indexPath)
 		results, err = searchService.Search(query, indexPath)
 	} else {
 		// Search current directory using centralized storage
-		indexPath, err := cmd.getProjectIndexPath(options.force)
+		indexPath, err = cmd.getProjectIndexPath(options.force)
 		if err != nil {
 			return NewInvalidArgumentError("failed to get project index path", err)
 		}
+		fmt.Fprintf(os.Stderr, "DEBUG: Searching current directory, indexPath: %s\n", indexPath)
 		results, err = searchService.Search(query, indexPath)
+		fmt.Fprintf(os.Stderr, "DEBUG: Immediately after search call - results: %v, err: %v\n", results != nil, err)
 	}
 
+	fmt.Fprintf(os.Stderr, "DEBUG: Before error handling, err variable is: %v\n", err)
+	fmt.Fprintf(os.Stderr, "DEBUG: Search completed, results: %v, err: %v\n", results != nil, err)
+
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "DEBUG: Handling error: %s\n", err.Error())
 		// Check if this is an index not found error
 		if strings.Contains(err.Error(), "index not found") || strings.Contains(err.Error(), "no such file") || strings.Contains(err.Error(), "not exist") {
+			fmt.Fprintf(os.Stderr, "DEBUG: Detected as NotFound error\n")
 			return NewNotFoundError("search failed", err)
 		}
+		fmt.Fprintf(os.Stderr, "DEBUG: Detected as General error\n")
 		return NewGeneralError("search failed", err)
 	}
 
@@ -217,7 +233,7 @@ func (cmd *SearchCommand) parseSearchOptions(args []string) (SearchOptions, erro
 		semantic:      false,
 		exact:         false,
 		fuzzy:         false,
-		modelName:     "all-MiniLM-L6-v2",
+		modelName:     "all-mpnet-base-v2",
 		embeddingPath: "",
 		cacheSize:     1000,
 		memoryLimit:   200, // MB
@@ -384,6 +400,26 @@ func (cmd *SearchCommand) displayTableResults(results *models.SearchResults, sta
 
 // displayJSONResults displays search results in JSON format
 func (cmd *SearchCommand) displayJSONResults(results *models.SearchResults) error {
+	// Handle nil results
+	if results == nil {
+		output := map[string]interface{}{
+			"query":          "unknown",
+			"totalResults":   0,
+			"displayed":      0,
+			"executionTime":  "0s",
+			"has_more":       false,
+			"results":        []interface{}{},
+		}
+
+		jsonData, err := json.MarshalIndent(output, "", "  ")
+		if err != nil {
+			return fmt.Errorf("failed to generate JSON output: %w", err)
+		}
+
+		fmt.Println(string(jsonData))
+		return nil
+	}
+
 	// Create a clean JSON structure for output
 	output := map[string]interface{}{
 		"query":          results.Query.QueryText,
@@ -431,7 +467,7 @@ All Options:
   -e, --exact             Use exact matching
   -z, --fuzzy             Use fuzzy matching
   -F, --force              Force search (use test index)
-  -M, --model <name>       Embedding model name (default: all-MiniLM-L6-v2)
+  -M, --model <name>       Embedding model name (default: all-mpnet-base-v2)
       --embedding-path     Path to external embedding model file
       --cache-size <n>     Embedding cache size (default: 1000)
       --memory-limit <mb>  Memory limit for embeddings in MB (default: 200)
@@ -448,7 +484,7 @@ Examples:
   code-search search "TODO" --dir /path/to/my-project
   code-search search "class.*Controller" --dir ../sibling-project --format json
   code-search search "import.*react" --dir ~/frontend --max-results 10
-  code-search search "user login" --semantic --model all-MiniLM-L6-v2
+  code-search search "user login" --semantic --model all-mpnet-base-v2
   code-search search "api endpoint" --model custom-model --embedding-path /path/to/model.onnx
   code-search search "memory leak" --cache-size 2000 --memory-limit 500
 

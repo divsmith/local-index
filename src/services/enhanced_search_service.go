@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -82,49 +83,28 @@ func (e *EmbeddingCodeParser) GetSupportedFileTypes() []string {
 	return e.originalParser.GetSupportedFileTypes()
 }
 
-// EnhancedSearch performs enhanced search with improved embedding support
-func (ess *EnhancedSearchService) EnhancedSearch(
+// Search implements the SearchServiceInterface with embedding support
+func (ess *EnhancedSearchService) Search(
 	query *models.SearchQuery,
 	indexPath string,
 ) (*models.SearchResults, error) {
-	// Load and validate index metadata
-	metadata, err := lib.LoadMetadata(indexPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load index metadata: %w", err)
-	}
-
-	// Validate model compatibility
-	if err := metadata.ValidateCompatible(ess.embeddingService); err != nil {
-		return nil, fmt.Errorf("model compatibility error: %w", err)
-	}
+	fmt.Fprintf(os.Stderr, "DEBUG ENHANCED: Search called with query: %s, indexPath: %s\n", query.QueryText, indexPath)
 
 	// Update the search service to use embedding-capable parser
-	originalParser := ess.codeParser
-	ess.codeParser = NewEmbeddingCodeParser(ess.embeddingService, originalParser)
+	originalParser := ess.SearchService.codeParser
+	ess.SearchService.codeParser = NewEmbeddingCodeParser(ess.embeddingService, ess.SearchService.codeParser)
 	defer func() {
-		ess.codeParser = originalParser // Restore original parser
+		ess.SearchService.codeParser = originalParser // Restore original parser
+		fmt.Fprintf(os.Stderr, "DEBUG ENHANCED: Parser restored\n")
 	}()
 
-	// Update query with embedding metadata
-	query.SetOption("model_name", metadata.ModelName)
-	query.SetOption("model_version", metadata.ModelVersion)
-	query.SetOption("vector_dimensions", fmt.Sprintf("%d", metadata.VectorDim))
+	fmt.Fprintf(os.Stderr, "DEBUG ENHANCED: Calling base search service...\n")
+	// Use the underlying search service with embedding capability
+	results, err := ess.SearchService.Search(query, indexPath)
+	fmt.Fprintf(os.Stderr, "DEBUG ENHANCED: Base search returned - results: %v, err: %v\n", results != nil, err)
+	fmt.Fprintf(os.Stderr, "DEBUG ENHANCED: About to return - results: %v, err: %v\n", results != nil, err)
 
-	// Perform the search using existing enhanced logic
-	results, err := ess.Search(query, indexPath)
-	if err != nil {
-		return nil, fmt.Errorf("enhanced search failed: %w", err)
-	}
-
-	// Add embedding metadata to results
-	results.AddMetadata("embedding_model", metadata.ModelName)
-	results.AddMetadata("embedding_version", metadata.ModelVersion)
-	results.AddMetadata("vector_dimensions", metadata.VectorDim)
-
-	ess.logger.Info("Enhanced search completed: %d results found in %v using %s",
-		results.TotalResults, results.ExecutionTime, metadata.ModelName)
-
-	return results, nil
+	return results, err
 }
 
 // SemanticSearch performs pure semantic search using embeddings
@@ -141,7 +121,7 @@ func (ess *EnhancedSearchService) SemanticSearch(
 		Threshold:     0.5, // Default threshold for semantic search
 	}
 
-	return ess.EnhancedSearch(query, indexPath)
+	return ess.Search(query, indexPath)
 }
 
 // HybridSearch performs hybrid search combining semantic and text search
@@ -164,7 +144,7 @@ func (ess *EnhancedSearchService) HybridSearch(
 	query.SetOption("semantic_weight", fmt.Sprintf("%.2f", semanticWeight))
 	query.SetOption("text_weight", fmt.Sprintf("%.2f", textWeight))
 
-	return ess.EnhancedSearch(query, indexPath)
+	return ess.Search(query, indexPath)
 }
 
 // GetEmbeddingInfo returns information about the current embedding service

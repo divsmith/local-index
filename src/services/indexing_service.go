@@ -284,6 +284,12 @@ func (is *IndexingService) IndexRepository(
 		return result, err
 	}
 
+	// Save metadata for enhanced search compatibility
+	if err := is.saveIndexMetadata(indexPath, codeIndex, result); err != nil {
+		result.Errors = append(result.Errors, fmt.Sprintf("Failed to save metadata: %v", err))
+		return result, err
+	}
+
 	result.Duration = time.Since(start)
 	result.Success = true
 
@@ -853,6 +859,49 @@ func (l *SilentLogger) Debug(msg string, args ...interface{}) {
 // Warn discards warning messages
 func (l *SilentLogger) Warn(msg string, args ...interface{}) {
 	// Silent - no output
+}
+
+// saveIndexMetadata saves metadata alongside the index file for enhanced search compatibility
+func (is *IndexingService) saveIndexMetadata(indexPath string, codeIndex *models.CodeIndex, result *IndexingResult) error {
+	// Get model information from the code parser
+	var modelName string
+	var vectorDim int
+
+	// Try to get model info from the code parser if it has embedding capabilities
+	if parserWithEmbedding, ok := is.codeParser.(interface{ GetEmbeddingService() interface{} }); ok {
+		if embeddingService := parserWithEmbedding.GetEmbeddingService(); embeddingService != nil {
+			if modelGetter, ok := embeddingService.(interface{ ModelName() string }); ok {
+				modelName = modelGetter.ModelName()
+			}
+			if dimGetter, ok := embeddingService.(interface{ Dimensions() int }); ok {
+				vectorDim = dimGetter.Dimensions()
+			}
+		}
+	}
+
+	// Fallback to defaults if we couldn't get model info
+	if modelName == "" {
+		modelName = "all-mpnet-base-v2"
+	}
+	if vectorDim == 0 {
+		vectorDim = 768
+	}
+
+	// Create model metadata
+	modelMetadata := lib.NewModelMetadata(modelName, vectorDim)
+
+	// Create index metadata
+	indexMetadata := lib.NewIndexMetadata(modelMetadata)
+	indexMetadata.UpdateMetadata(result.FilesIndexed, result.ChunksCreated, 0, result.Duration)
+
+	// Save metadata to the same directory as the index file
+	indexDir := filepath.Dir(indexPath)
+	if err := indexMetadata.SaveMetadata(indexDir); err != nil {
+		return fmt.Errorf("failed to save index metadata: %w", err)
+	}
+
+	is.logger.Debug("Saved index metadata with model: %s (%dD)", modelName, vectorDim)
+	return nil
 }
 
 // DirectoryIndexStatus contains information about a directory's index

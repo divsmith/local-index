@@ -23,7 +23,7 @@ func NewIndexCommand() *IndexCommand {
 	// Create dependencies
 	fileScanner := lib.NewFileSystemScanner()
 	codeParser := lib.NewSimpleCodeParser()
-	vectorStore := lib.NewInMemoryVectorStore(".code-search-index.db")
+	vectorStore := lib.NewInMemoryVectorStore(".code-search-index.db") // This should be overridden by centralized storage
 	logger := &services.DefaultLogger{}
 	options := services.DefaultIndexingOptions()
 

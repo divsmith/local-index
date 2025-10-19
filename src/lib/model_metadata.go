@@ -79,11 +79,21 @@ func (m *IndexMetadata) SaveMetadata(indexPath string) error {
 
 // LoadMetadata loads metadata from a file
 func LoadMetadata(indexPath string) (*IndexMetadata, error) {
-	metadataPath := filepath.Join(indexPath, "metadata.json")
+	// Try to load metadata from various possible locations
+	var metadataPath string
+
+	// Check if indexPath is a directory
+	if info, err := os.Stat(indexPath); err == nil && info.IsDir() {
+		metadataPath = filepath.Join(indexPath, "metadata.json")
+	} else {
+		// For centralized storage, look for metadata next to the index file
+		indexDir := filepath.Dir(indexPath)
+		metadataPath = filepath.Join(indexDir, "metadata.json")
+	}
 
 	data, err := os.ReadFile(metadataPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read metadata file: %w", err)
+		return nil, fmt.Errorf("failed to read metadata file at %s: %w", metadataPath, err)
 	}
 
 	var metadata IndexMetadata

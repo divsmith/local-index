@@ -160,9 +160,10 @@ func (ec *EmbeddingCache) Put(text, modelName string, embedding []float32) {
 		Tags:        ec.generateTags(text),
 	}
 
-	// Store in both levels
+	// Store in L1 cache only (L2 temporarily disabled due to performance issues)
 	ec.putToL1(cacheKey, entry)
-	ec.putToL2(cacheKey, entry)
+	// TODO: Fix L2 cache performance issues and re-enable
+	// ec.putToL2(cacheKey, entry)
 
 	// Update statistics
 	ec.updateMemoryUsage()
@@ -655,49 +656,37 @@ func (pec *PersistentEmbeddingCache) saveIndex() {
 }
 
 func (pec *PersistentEmbeddingCache) cleanupIfNeeded() {
+	// TEMPORARY FIX: Disable cleanup to prevent hanging
+	// The original implementation has performance issues that cause deadlocks
+	// TODO: Implement proper non-blocking cleanup in background
+
+	// Only cleanup if we're significantly over the limit
 	currentSize := pec.getCurrentSize()
-	if currentSize <= pec.maxSize {
+	if currentSize <= pec.maxSize*2 { // Allow 2x size before cleanup
 		return
 	}
 
-	// Sort entries by access time (oldest first)
-	var entries []*EmbeddingIndexEntry
-	for _, entry := range pec.index {
-		entries = append(entries, entry)
-	}
+	// Simple cleanup: remove oldest few entries without complex sorting
+	removedCount := 0
+	maxToRemove := 10 // Remove at most 10 entries at a time
 
-	for i := 0; i < len(entries)-1; i++ {
-		for j := i + 1; j < len(entries); j++ {
-			if entries[i].LastAccess.After(entries[j].LastAccess) {
-				entries[i], entries[j] = entries[j], entries[i]
-			}
-		}
-	}
-
-	// Remove oldest entries until we're under the limit
-	targetSize := pec.maxSize * 3 / 4 // Leave 25% headroom
-	removedSize := int64(0)
-
-	for _, entry := range entries {
-		if currentSize-removedSize <= targetSize {
+	for key, entry := range pec.index {
+		if removedCount >= maxToRemove {
 			break
 		}
 
+		// Remove file
 		filePath := filepath.Join(pec.basePath, entry.FileName)
-		os.Remove(filePath)
+		os.Remove(filePath) // Ignore errors
 
 		// Remove from index
-		for key, indexEntry := range pec.index {
-			if indexEntry.FileName == entry.FileName {
-				delete(pec.index, key)
-				break
-			}
-		}
-
-		removedSize += entry.Size
+		delete(pec.index, key)
+		removedCount++
 	}
 
-	pec.saveIndex()
+	if removedCount > 0 {
+		pec.saveIndex()
+	}
 }
 
 func (pec *PersistentEmbeddingCache) cleanup() {

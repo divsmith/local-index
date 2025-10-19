@@ -17,23 +17,36 @@ func NewProjectDetector() *ProjectDetector {
 
 // DetectProjectRoot finds the project root directory starting from the given path
 func (pd *ProjectDetector) DetectProjectRoot(startPath string) (string, error) {
+	return pd.DetectProjectRootWithOptions(startPath, true)
+}
+
+// DetectProjectRootWithOptions finds the project root with options to control walking behavior
+func (pd *ProjectDetector) DetectProjectRootWithOptions(startPath string, allowWalkUp bool) (string, error) {
 	// Convert to absolute path first
 	absPath, err := filepath.Abs(startPath)
 	if err != nil {
 		absPath = startPath
 	}
 
-	// First, try to find .git directory
-	if gitRoot := pd.findGitRoot(absPath); gitRoot != "" {
-		return gitRoot, nil
+	// Check if the start path itself is a project root
+	if pd.isDirectoryProjectRoot(absPath) {
+		return absPath, nil
 	}
 
-	// Fallback: look for other project indicators
-	if projectRoot := pd.findProjectRootByMarkers(absPath); projectRoot != "" {
-		return projectRoot, nil
+	// Only walk up the tree if allowed
+	if allowWalkUp {
+		// First, try to find .git directory by walking up from start path
+		if gitRoot := pd.findGitRoot(absPath); gitRoot != "" {
+			return gitRoot, nil
+		}
+
+		// Fallback: look for other project indicators by walking up from start path
+		if projectRoot := pd.findProjectRootByMarkers(absPath); projectRoot != "" {
+			return projectRoot, nil
+		}
 	}
 
-	// Final fallback: use current directory
+	// Final fallback: use the absolute path as-is
 	return absPath, nil
 }
 
@@ -126,4 +139,43 @@ func (pd *ProjectDetector) GetProjectRelativePath(filePath string) (string, erro
 	}
 
 	return relPath, nil
+}
+
+// isDirectoryProjectRoot checks if the given directory is already a project root
+func (pd *ProjectDetector) isDirectoryProjectRoot(dirPath string) bool {
+	// Check for .git directory
+	if gitPath := filepath.Join(dirPath, ".git"); pd.pathExists(gitPath) {
+		return true
+	}
+
+	// Check for project markers in this specific directory
+	projectMarkers := []string{
+		"go.mod",           // Go modules
+		"package.json",     // Node.js projects
+		"setup.py",         // Python projects
+		"pyproject.toml",   // Python projects
+		"Cargo.toml",       // Rust projects
+		"pom.xml",          // Maven projects
+		"build.gradle",     // Gradle projects
+		"Makefile",         // Make-based projects
+		"CMakeLists.txt",   // CMake projects
+		".project",         // Eclipse projects
+	}
+
+	for _, marker := range projectMarkers {
+		markerPath := filepath.Join(dirPath, marker)
+		if pd.pathExists(markerPath) {
+			return true
+		}
+	}
+
+	// If no markers found, treat this directory as its own project
+	// This ensures explicitly specified directories are respected
+	return true
+}
+
+// pathExists checks if a path exists
+func (pd *ProjectDetector) pathExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
 }
