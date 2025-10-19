@@ -19,9 +19,11 @@ type SearchServiceInterface interface {
 
 // SearchCommand implements the search command
 type SearchCommand struct {
-	searchService *services.SearchService
-	logger        services.Logger
-	fileUtils     *lib.FileUtilities
+	searchService    *services.SearchService
+	logger           services.Logger
+	fileUtils        *lib.FileUtilities
+	storageManager   *lib.StorageManager
+	projectDetector  *lib.ProjectDetector
 }
 
 // NewSearchCommand creates a new search command
@@ -37,10 +39,23 @@ func NewSearchCommand() *SearchCommand {
 		services.DefaultSearchOptions(),
 	)
 
+	// Initialize storage manager and project detector
+	storageManager := lib.NewStorageManager()
+	projectDetector := lib.NewProjectDetector()
+
+	// Ensure centralized storage directories exist
+	if err := storageManager.EnsureDirectories(); err != nil {
+		// For search command, we don't want to fail initialization
+		// Just log the error and continue
+		fmt.Fprintf(os.Stderr, "Warning: Failed to create storage directories: %v\n", err)
+	}
+
 	return &SearchCommand{
-		searchService: baseSearchService,
-		logger:        silentLogger,
-		fileUtils:     lib.NewFileUtilities(),
+		searchService:   baseSearchService,
+		logger:          silentLogger,
+		fileUtils:       lib.NewFileUtilities(),
+		storageManager:  storageManager,
+		projectDetector: projectDetector,
 	}
 }
 
@@ -137,15 +152,19 @@ func (cmd *SearchCommand) Execute(args []string) error {
 	var results *models.SearchResults
 
 	if options.directory != "" {
-		// Search in specified directory - resolve index location
-		indexPath, err := cmd.fileUtils.GetIndexLocation(options.directory)
+		// Search in specified directory - use centralized storage
+		projectRoot, err := cmd.projectDetector.DetectProjectRoot(options.directory)
 		if err != nil {
-			return NewInvalidArgumentError("failed to resolve index location", err)
+			return NewInvalidArgumentError("failed to detect project root", err)
 		}
+		indexPath := cmd.storageManager.GetProjectIndexPath(projectRoot)
 		results, err = searchService.Search(query, indexPath)
 	} else {
-		// Search current directory (backward compatibility)
-		indexPath := cmd.getIndexPath(options.force)
+		// Search current directory using centralized storage
+		indexPath, err := cmd.getProjectIndexPath(options.force)
+		if err != nil {
+			return NewInvalidArgumentError("failed to get project index path", err)
+		}
 		results, err = searchService.Search(query, indexPath)
 	}
 
@@ -320,17 +339,29 @@ func (cmd *SearchCommand) parseSearchOptions(args []string) (SearchOptions, erro
 	return options, nil
 }
 
-// getIndexPath returns the path to the index file
-func (cmd *SearchCommand) getIndexPath(force bool) string {
-	// Default index path
-	indexPath := ".code-search-index"
+// getProjectIndexPath returns the centralized storage path for the current project
+func (cmd *SearchCommand) getProjectIndexPath(force bool) (string, error) {
+	// Get current working directory
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return "", fmt.Errorf("failed to get current directory: %w", err)
+	}
+
+	// Detect project root
+	projectRoot, err := cmd.projectDetector.DetectProjectRoot(currentDir)
+	if err != nil {
+		return "", fmt.Errorf("failed to detect project root: %w", err)
+	}
+
+	// Get centralized index path
+	indexPath := cmd.storageManager.GetProjectIndexPath(projectRoot)
 
 	// If force is true, use a temporary path for testing
 	if force {
-		return indexPath + ".test"
+		return indexPath + ".test", nil
 	}
 
-	return indexPath
+	return indexPath, nil
 }
 
 // displayTableResults displays search results in minimal format for agents

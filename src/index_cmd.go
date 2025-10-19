@@ -80,30 +80,16 @@ func (cmd *IndexCommand) Execute(args []string) error {
 	}
 	defer cmd.validator.GetFileUtilities().ReleaseLock(lockFile)
 
-	// Perform indexing based on whether directory is specified
+	// Perform indexing using centralized project storage
 	start := time.Now()
-	var result *services.IndexingResult
 
-	if options.directory != "" {
-		// Index specified directory using validated config
-		fmt.Printf("Indexing directory: %s\n", dirConfig.Path)
-		result, err = cmd.indexingService.IndexDirectory(
-			dirConfig.Path,
-			options.force,
-			progressCallback,
-		)
-	} else {
-		// Index current directory (backward compatibility)
-		indexPath := cmd.getIndexPath(options.force)
-		fmt.Printf("Indexing repository: %s\n", dirConfig.Path)
-
-		result, err = cmd.indexingService.IndexRepository(
-			dirConfig.Path,
-			indexPath,
-			options.force,
-			progressCallback,
-		)
-	}
+	// Always use the new IndexProject method which handles project detection and centralized storage
+	fmt.Printf("Indexing project: %s\n", dirConfig.Path)
+	result, err := cmd.indexingService.IndexProject(
+		dirConfig.Path,
+		options.force,
+		progressCallback,
+	)
 
 	if err != nil {
 		fmt.Printf("\n")
@@ -220,17 +206,6 @@ func (cmd *IndexCommand) parseIndexOptions(args []string) (IndexOptions, error) 
 	return options, nil
 }
 
-// getIndexPath returns the path to the index file
-func (cmd *IndexCommand) getIndexPath(force bool) string {
-	indexPath := ".code-search-index"
-
-	// If force is true, use a test path
-	if force {
-		return indexPath + ".test"
-	}
-
-	return indexPath
-}
 
 // displayIndexResult displays the result of indexing
 func (cmd *IndexCommand) displayIndexResult(result *services.IndexingResult, start time.Time, options IndexOptions) error {

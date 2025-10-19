@@ -15,13 +15,15 @@ import (
 
 // IndexingService handles codebase indexing operations
 type IndexingService struct {
-	fileScanner  FileScanner
-	codeParser   CodeParser
-	vectorStore  models.VectorStore
-	logger       Logger
-	indexOptions models.IndexingOptions
-	workerPool   *lib.WorkerPool
-	mu           sync.RWMutex
+	fileScanner    FileScanner
+	codeParser     CodeParser
+	vectorStore    models.VectorStore
+	logger         Logger
+	indexOptions   models.IndexingOptions
+	workerPool     *lib.WorkerPool
+	storageManager *lib.StorageManager
+	projectDetector *lib.ProjectDetector
+	mu             sync.RWMutex
 }
 
 // DefaultIndexingOptions returns default indexing options
@@ -105,14 +107,77 @@ func NewIndexingService(
 
 	workerPool := lib.NewWorkerPool(poolOptions)
 
-	return &IndexingService{
-		fileScanner:  fileScanner,
-		codeParser:   codeParser,
-		vectorStore:  vectorStore,
-		logger:       logger,
-		indexOptions: options,
-		workerPool:   workerPool,
+	// Initialize storage manager and project detector
+	storageManager := lib.NewStorageManager()
+	projectDetector := lib.NewProjectDetector()
+
+	// Ensure centralized storage directories exist
+	if err := storageManager.EnsureDirectories(); err != nil {
+		logger.Error("Failed to create storage directories: %v", err)
 	}
+
+	return &IndexingService{
+		fileScanner:     fileScanner,
+		codeParser:      codeParser,
+		vectorStore:     vectorStore,
+		logger:          logger,
+		indexOptions:    options,
+		workerPool:      workerPool,
+		storageManager:  storageManager,
+		projectDetector: projectDetector,
+	}
+}
+
+// IndexProject indexes a project using centralized storage
+func (is *IndexingService) IndexProject(
+	startPath string,
+	forceReindex bool,
+	progressCallback ProgressCallback,
+) (*IndexingResult, error) {
+	// Detect project root
+	projectRoot, err := is.projectDetector.DetectProjectRoot(startPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to detect project root: %w", err)
+	}
+
+	// Get centralized index path
+	indexPath := is.storageManager.GetProjectIndexPath(projectRoot)
+
+	is.logger.Info("Indexing project at root: %s", projectRoot)
+	is.logger.Info("Using centralized storage: %s", indexPath)
+
+	return is.IndexRepository(projectRoot, indexPath, forceReindex, progressCallback)
+}
+
+// GetProjectIndexStatus returns the index status for a project using centralized storage
+func (is *IndexingService) GetProjectIndexStatus(startPath string) (*IndexingStatus, error) {
+	// Detect project root
+	projectRoot, err := is.projectDetector.DetectProjectRoot(startPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to detect project root: %w", err)
+	}
+
+	// Get centralized index path
+	indexPath := is.storageManager.GetProjectIndexPath(projectRoot)
+
+	return is.GetIndexingStatus(indexPath)
+}
+
+// DeleteProjectIndex removes a project's index from centralized storage
+func (is *IndexingService) DeleteProjectIndex(startPath string) error {
+	// Detect project root
+	projectRoot, err := is.projectDetector.DetectProjectRoot(startPath)
+	if err != nil {
+		return fmt.Errorf("failed to detect project root: %w", err)
+	}
+
+	// Remove project from centralized storage
+	return is.storageManager.RemoveProject(projectRoot)
+}
+
+// ListIndexedProjects returns a list of all indexed projects
+func (is *IndexingService) ListIndexedProjects() ([]string, error) {
+	return is.storageManager.ListProjects()
 }
 
 // IndexRepository indexes an entire repository
