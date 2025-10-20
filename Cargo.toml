@@ -46,14 +46,20 @@ tracing-subscriber = "0.3"
 # Configuration
 config = "0.13"
 
-# Vector operations (placeholder - will be replaced with actual implementation)
+# Vector operations
 ndarray = "0.15"
+
+# Date/time handling
+chrono = { version = "0.4", features = ["serde"] }
 
 # Tree-sitter for language parsing
 tree-sitter = "0.20"
+tree-sitter-rust = "0.20"
+tree-sitter-python = "0.20"
+tree-sitter-md = "0.1"
 
-# ONNX runtime for model inference (placeholder)
-# ort = "1.0"  # Will be added in later phases
+# For now, remove ONNX dependencies to focus on MVP
+# Will be added back in later phases after core functionality works
 
 [dev-dependencies]
 tempfile = "3.0"

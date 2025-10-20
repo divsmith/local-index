@@ -1,3 +1,13 @@
 // ABOUTME: Search engine for codesearch
 
-// Placeholder module - will be implemented in Phase 1
+pub mod engine;
+pub mod vector_index;
+
+pub use engine::{
+    SearchEngine, SearchQuery, QueryType, SearchFilters,
+    SearchResult, SearchResultType
+};
+pub use vector_index::{
+    ANNIndex, IndexedVector, SearchResult as VectorResult,
+    SearchMetrics
+};

@@ -82,3 +82,4 @@ impl Default for FileScanner {
         Self::new()
     }
 }
+

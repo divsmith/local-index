@@ -55,6 +55,21 @@ pub mod error {
 
         #[error("Search error: {0}")]
         Search(String),
+
+        #[error("File system error: {0}")]
+        FileSystem(String),
+
+        #[error("Storage error: {0}")]
+        Storage(String),
+
+        #[error("JSON error: {0}")]
+        Json(#[from] serde_json::Error),
+    }
+
+    impl From<notify::Error> for CodeSearchError {
+        fn from(err: notify::Error) -> Self {
+            CodeSearchError::FileSystem(err.to_string())
+        }
     }
 
     pub type Result<T> = std::result::Result<T, CodeSearchError>;
