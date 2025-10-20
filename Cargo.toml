@@ -1,0 +1,71 @@
+[package]
+name = "codesearch"
+version = "0.1.0"
+edition = "2021"
+authors = ["Claude Code <claude@anthropic.com>"]
+description = "Agent-first semantic code search tool"
+license = "MIT"
+repository = "https://github.com/anthropics/codesearch"
+keywords = ["search", "semantic", "code", "cli", "ai"]
+categories = ["command-line-utilities", "development-tools"]
+
+[[bin]]
+name = "codesearch"
+path = "src/main.rs"
+
+[lib]
+name = "codesearch"
+path = "src/lib.rs"
+
+[dependencies]
+# CLI framework
+clap = { version = "4.0", features = ["derive"] }
+
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Database
+rusqlite = { version = "0.31", features = ["bundled"] }
+
+# File system
+notify = "6.0"
+walkdir = "2.0"
+
+# Async runtime
+tokio = { version = "1.0", features = ["full"] }
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = "0.3"
+
+# Configuration
+config = "0.13"
+
+# Vector operations (placeholder - will be replaced with actual implementation)
+ndarray = "0.15"
+
+# Tree-sitter for language parsing
+tree-sitter = "0.20"
+
+# ONNX runtime for model inference (placeholder)
+# ort = "1.0"  # Will be added in later phases
+
+[dev-dependencies]
+tempfile = "3.0"
+criterion = "0.5"
+
+[build-dependencies]
+# Tree-sitter language grammars will be added here in later phases
+
+[features]
+default = []
+# Features will be added in later phases as we implement different languages
+
+[[bench]]
+name = "vector_benchmark"
+harness = false
