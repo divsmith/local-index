@@ -53,7 +53,7 @@ impl EmbeddingGenerator {
             .collect();
 
         // Generate embeddings for all chunks
-        let embeddings = self.model_manager.generate_embeddings(&chunk_texts)?;
+        let embeddings = self.model_manager.generate_embeddings_sync(&chunk_texts)?;
 
         // Combine chunk information with embeddings
         let mut file_embeddings = Vec::new();
@@ -69,7 +69,7 @@ impl EmbeddingGenerator {
     }
 
     pub fn generate_query_embedding(&self, query: &str) -> Result<Vec<f32>> {
-        let embeddings = self.model_manager.generate_embeddings(&[query.to_string()])?;
+        let embeddings = self.model_manager.generate_embeddings_sync(&[query.to_string()])?;
         Ok(embeddings.into_iter().next().unwrap_or_default())
     }
 

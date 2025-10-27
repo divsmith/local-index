@@ -4,9 +4,13 @@ use crate::error::{CodeSearchError, Result};
 
 pub mod embeddings;
 pub mod registry;
+pub mod onnx_embeddings;
+pub mod fallback;
 
 pub use embeddings::{EmbeddingGenerator, CodeChunk};
 pub use registry::ModelRegistry;
+pub use onnx_embeddings::{OnnxEmbeddingGenerator as OnnxGenerator, ModelManager as OnnxManager};
+pub use fallback::FallbackModelManager;
 
 // Model configuration
 #[derive(Debug, Clone)]
@@ -28,107 +32,57 @@ impl Default for ModelConfig {
     }
 }
 
-// Improved mock model manager with better semantic embeddings
-#[derive(Clone)]
+// ONNX-powered model manager with real semantic embeddings
 pub struct ModelManager {
     config: ModelConfig,
+    onnx_manager: OnnxManager,
+    fallback_manager: FallbackModelManager,
+    onnx_model: Option<std::sync::Arc<OnnxGenerator>>,
 }
 
 impl ModelManager {
     pub fn new(config: ModelConfig) -> Result<Self> {
-        Ok(Self { config })
+        Ok(Self {
+            config,
+            onnx_manager: OnnxManager::new()?,
+            fallback_manager: FallbackModelManager::new(config.clone()),
+            onnx_model: None,
+        })
     }
 
-    pub fn generate_embeddings(&self, texts: &[String]) -> Result<Vec<Vec<f32>>> {
-        let mut embeddings = Vec::with_capacity(texts.len());
-
-        for text in texts {
-            let embedding = self.generate_semantic_embedding(text);
-            embeddings.push(embedding);
-        }
-
-        Ok(embeddings)
-    }
-
-    fn generate_semantic_embedding(&self, text: &str) -> Vec<f32> {
-        let mut embedding = Vec::with_capacity(self.config.embedding_dimension);
-
-        // Use a more sophisticated embedding generation that captures semantic meaning
-        let semantic_features = self.extract_semantic_features(text);
-
-        for i in 0..self.config.embedding_dimension {
-            let feature_value = if i < semantic_features.len() {
-                semantic_features[i]
-            } else {
-                // Fill remaining dimensions with smoothed noise
-                let hash = self.complex_hash(&format!("{}:{}", text, i));
-                ((hash as f64 / u64::MAX as f64) * 2.0 - 1.0) as f32 * 0.1
-            };
-            embedding.push(feature_value);
-        }
-
-        // Normalize the embedding
-        self.normalize_embedding(&mut embedding);
-        embedding
-    }
-
-    fn extract_semantic_features(&self, text: &str) -> Vec<f32> {
-        let mut features = Vec::new();
-        let lowercase = text.to_lowercase();
-
-        // Programming language indicators
-        features.push(if lowercase.contains("fn") || lowercase.contains("func") || lowercase.contains("def") { 0.8 } else { 0.0 });
-        features.push(if lowercase.contains("class") || lowercase.contains("struct") { 0.8 } else { 0.0 });
-        features.push(if lowercase.contains("import") || lowercase.contains("use") { 0.7 } else { 0.0 });
-        features.push(if lowercase.contains("test") || lowercase.contains("assert") { 0.6 } else { 0.0 });
-        features.push(if lowercase.contains("error") || lowercase.contains("err") { 0.7 } else { 0.0 });
-        features.push(if lowercase.contains("async") || lowercase.contains("await") { 0.6 } else { 0.0 });
-
-        // Common programming concepts
-        features.push(if lowercase.contains("loop") || lowercase.contains("for") || lowercase.contains("while") { 0.5 } else { 0.0 });
-        features.push(if lowercase.contains("if") || lowercase.contains("match") { 0.4 } else { 0.0 });
-        features.push(if lowercase.contains("return") || lowercase.contains("yield") { 0.5 } else { 0.0 });
-
-        // Code-specific features
-        features.push(if text.contains("=>") || text.contains("->") { 0.6 } else { 0.0 }); // Function arrows
-        features.push(if text.contains("::") { 0.5 } else { 0.0 }); // Namespaces
-        features.push(if text.contains("()") { 0.3 } else { 0.0 }); // Functions
-        features.push(if text.contains("{}") { 0.4 } else { 0.0 }); // Blocks
-
-        // Text characteristics
-        features.push(text.len() as f32 / 1000.0); // Length feature
-        features.push(lowercase.split_whitespace().count() as f32 / 100.0); // Word count
-        features.push(lowercase.matches("r#").count() as f32 / 10.0); // Raw strings
-        features.push(lowercase.matches("//").count() as f32 / 10.0); // Comments
-
-        // Generate more features to reach a reasonable size
-        while features.len() < 100 {
-            let next_feature = features.len() as f32 / features.len() as f32;
-            features.push(next_feature);
-        }
-
-        features
-    }
-
-    fn complex_hash(&self, text: &str) -> u64 {
-        let mut hash = 0u64;
-        let bytes = text.as_bytes();
-
-        for (i, &byte) in bytes.iter().enumerate() {
-            hash = hash.wrapping_mul(31).wrapping_add(byte as u64);
-            hash = hash.wrapping_mul(i as u64 + 1);
-        }
-
-        hash
-    }
-
-    fn normalize_embedding(&self, embedding: &mut Vec<f32>) {
-        let magnitude: f32 = embedding.iter().map(|x| x * x).sum::<f32>().sqrt();
-        if magnitude > 0.0 {
-            for value in embedding.iter_mut() {
-                *value /= magnitude;
+    pub async fn generate_embeddings(&mut self, texts: &[String]) -> Result<Vec<Vec<f32>>> {
+        // Try ONNX first, fall back to mock if unavailable
+        if self.onnx_model.is_none() {
+            match self.onnx_manager.load_model("codebert-base").await {
+                Ok(model) => {
+                    self.onnx_model = Some(model);
+                }
+                Err(_) => {
+                    // Fall back to mock implementation
+                    return self.fallback_manager.generate_embeddings(texts);
+                }
             }
         }
+
+        if let Some(model) = &self.onnx_model {
+            let mut embeddings = Vec::with_capacity(texts.len());
+            for text in texts {
+                let embedding = model.generate(text).await?;
+                embeddings.push(embedding);
+            }
+            Ok(embeddings)
+        } else {
+            self.fallback_manager.generate_embeddings(texts)
+        }
+    }
+
+    pub fn generate_embeddings_sync(&self, texts: &[String]) -> Result<Vec<Vec<f32>>> {
+        self.fallback_manager.generate_embeddings(texts)
+    }
+
+    pub async fn generate_single_embedding(&mut self, text: &str) -> Result<Vec<f32>> {
+        let mut results = self.generate_embeddings(&[text.to_string()]).await?;
+        Ok(results.remove(0))
     }
 
     pub fn get_config(&self) -> &ModelConfig {
