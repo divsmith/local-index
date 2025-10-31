@@ -8,10 +8,11 @@ import sqlite3
 import argparse
 import sys
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Set
 import json
 import time
 import hashlib
+import fnmatch
 
 # Simple text-based search for MVP
 try:
@@ -99,44 +100,82 @@ class SimpleCodeIndex:
 
         return chunks
 
-    def index_directory(self, path: str, exclude_patterns: List[str] = None):
-        """Index all files in directory."""
-        if exclude_patterns is None:
-            exclude_patterns = ['.git', 'node_modules', '__pycache__', '.venv', 'target', 'build', 'dist']
+    def _parse_gitignore(self, gitignore_path: Path) -> Set[str]:
+        """Parse .gitignore file and return set of ignore patterns."""
+        if not gitignore_path.exists():
+            return set()
 
-        path_obj = Path(path).resolve()
-        indexed_files = 0
-        skipped_files = 0
+        patterns = set()
+        try:
+            with open(gitignore_path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    # Skip empty lines and comments
+                    if not line or line.startswith('#'):
+                        continue
+                    patterns.add(line)
+        except Exception as e:
+            print(f"  Warning: Could not read {gitignore_path}: {e}")
 
-        print(f"Indexing directory: {path_obj}")
+        return patterns
 
-        for file_path in path_obj.rglob('*'):
-            if file_path.is_file():
-                # Skip excluded patterns
-                if any(pattern in str(file_path) for pattern in exclude_patterns):
-                    skipped_files += 1
-                    continue
+    def _should_ignore_file(self, file_path: Path, gitignore_patterns: Set[str], base_path: Path) -> bool:
+        """Check if file should be ignored based on gitignore patterns."""
+        # Get relative path from the base directory
+        try:
+            rel_path = file_path.relative_to(base_path)
+            rel_path_str = str(rel_path).replace('\\', '/')  # Normalize path separators
+        except ValueError:
+            # If we can't get relative path, use the full path
+            rel_path_str = str(file_path).replace('\\', '/')
 
-                # Skip binary files and very large files
-                if not self._is_text_file(file_path) or file_path.stat().st_size > 1024 * 1024:  # 1MB
-                    skipped_files += 1
-                    continue
+        # Check against each gitignore pattern
+        for pattern in gitignore_patterns:
+            # Handle negation patterns starting with !
+            if pattern.startswith('!'):
+                # Negation pattern - if it matches, don't ignore
+                neg_pattern = pattern[1:]
+                if fnmatch.fnmatch(rel_path_str, neg_pattern) or fnmatch.fnmatch(file_path.name, neg_pattern):
+                    return False
+                continue
 
-                try:
-                    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                        content = f.read()
+            # Handle directory patterns ending with /
+            if pattern.endswith('/'):
+                if fnmatch.fnmatch(rel_path_str + '/', pattern) or fnmatch.fnmatch(file_path.name + '/', pattern):
+                    return True
+                continue
 
-                    self._index_file(str(file_path), content)
-                    indexed_files += 1
+            # Regular pattern matching
+            if fnmatch.fnmatch(rel_path_str, pattern) or fnmatch.fnmatch(file_path.name, pattern):
+                return True
 
-                    if indexed_files % 10 == 0:
-                        print(f"  Indexed {indexed_files} files...")
+            # Handle leading slash patterns (absolute from repo root)
+            if pattern.startswith('/'):
+                if fnmatch.fnmatch('/' + rel_path_str, pattern) or fnmatch.fnmatch('/' + file_path.name, pattern):
+                    return True
 
-                except Exception as e:
-                    print(f"  Warning: Could not index {file_path}: {e}")
-                    skipped_files += 1
+        return False
 
-        print(f"Indexing complete: {indexed_files} files indexed, {skipped_files} files skipped")
+    def clear_index(self):
+        """Clear all indexed data from the database."""
+        if os.path.exists(self.db_path):
+            try:
+                # Remove the database file completely
+                os.remove(self.db_path)
+                print(f"Index cleared successfully")
+                print(f"Removed database: {self.db_path}")
+
+                # Re-initialize the database structure
+                self._init_db()
+                print("Fresh database initialized")
+
+            except Exception as e:
+                print(f"Error clearing index: {e}")
+                return False
+        else:
+            print("No index database found to clear")
+
+        return True
 
     def _is_text_file(self, file_path: Path) -> bool:
         """Check if file is likely a text file."""
@@ -258,27 +297,48 @@ class SimpleCodeIndex:
             print()
 
     def index_directory(self, path: str, exclude_patterns: List[str] = None, verbose: bool = False):
-        """Index all files in directory."""
+        """Index all files in directory, respecting .gitignore rules."""
+        # Default exclude patterns for things we always want to skip
+        default_excludes = ['.git', '.gitignore', 'node_modules', '__pycache__', '.venv', 'venv', 'target', 'build', 'dist']
         if exclude_patterns is None:
-            exclude_patterns = ['.git', 'node_modules', '__pycache__', '.venv', 'target', 'build', 'dist']
+            exclude_patterns = default_excludes
+        else:
+            exclude_patterns.extend(default_excludes)
 
         path_obj = Path(path).resolve()
         indexed_files = 0
         skipped_files = 0
 
+        # Look for .gitignore file
+        gitignore_path = path_obj / '.gitignore'
+        gitignore_patterns = self._parse_gitignore(gitignore_path)
+
         if verbose:
             print(f"Indexing directory: {path_obj}")
-            print(f"Exclude patterns: {exclude_patterns}")
+            if gitignore_patterns:
+                print(f"Found .gitignore with {len(gitignore_patterns)} patterns")
+                if verbose:
+                    print(f"Gitignore patterns: {sorted(gitignore_patterns)}")
+            print(f"Additional exclude patterns: {exclude_patterns}")
         else:
             print(f"Indexing directory: {path_obj}")
+            if gitignore_patterns:
+                print(f"  Using .gitignore patterns ({len(gitignore_patterns)} patterns)")
 
         for file_path in path_obj.rglob('*'):
             if file_path.is_file():
-                # Skip excluded patterns
+                # First check hardcoded exclude patterns
                 if any(pattern in str(file_path) for pattern in exclude_patterns):
                     skipped_files += 1
                     if verbose:
                         print(f"  Skipped (excluded): {file_path}")
+                    continue
+
+                # Then check .gitignore patterns if any exist
+                if gitignore_patterns and self._should_ignore_file(file_path, gitignore_patterns, path_obj):
+                    skipped_files += 1
+                    if verbose:
+                        print(f"  Skipped (.gitignore): {file_path}")
                     continue
 
                 # Skip binary files and very large files
@@ -331,7 +391,7 @@ class SimpleCodeIndex:
 
         conn.close()
 
-        print("\n📊 Index Statistics")
+        print("\nIndex Statistics")
         print("=" * 50)
         print(f"Files indexed: {file_count:,}")
         print(f"Code chunks: {chunk_count:,}")
@@ -344,39 +404,40 @@ class SimpleCodeIndex:
 
     def print_status(self):
         """Print current status of the search tool."""
-        print("\n🔍 CodeSearch Status")
+        print("\nCodeSearch Status")
         print("=" * 50)
 
         # Check database exists
         if os.path.exists(self.db_path):
-            print("✅ Database exists")
+            print("Database exists")
             self.print_stats()
         else:
-            print("❌ No database found")
+            print("No database found")
             print("Run 'python3 codesearch.py index <directory>' to create an index")
 
         # Check dependencies
-        print("\n📦 Dependencies:")
-        print(f"✅ Python standard library available")
-        print(f"✅ SQLite available")
+        print("\nDependencies:")
+        print(f"Python standard library available")
+        print(f"SQLite available")
 
-        print("\n🚀 Quick Start:")
+        print("\nQuick Start:")
         print("1. Index: python3 codesearch.py index .")
         print("2. Search: python3 codesearch.py search \"your query\"")
         print("3. Status: python3 codesearch.py status")
         print("4. Help: python3 codesearch.py help")
+        print("5. Clear: python3 codesearch.py clear")
         print("=" * 50)
 
     def run_diagnostics(self):
         """Run diagnostic checks on the tool and database."""
-        print("\n🩺 CodeSearch Diagnostics")
+        print("\nCodeSearch Diagnostics")
         print("=" * 50)
 
         issues = []
 
         # Check database
         if os.path.exists(self.db_path):
-            print("✅ Database file exists")
+            print("Database file exists")
 
             try:
                 conn = sqlite3.connect(self.db_path)
@@ -386,9 +447,9 @@ class SimpleCodeIndex:
                 cursor.execute("PRAGMA integrity_check")
                 integrity_result = cursor.fetchone()[0]
                 if integrity_result == "ok":
-                    print("✅ Database integrity check passed")
+                    print("Database integrity check passed")
                 else:
-                    print(f"❌ Database integrity issues: {integrity_result}")
+                    print(f"Database integrity issues: {integrity_result}")
                     issues.append("Database integrity issues")
 
                 # Check tables exist
@@ -398,18 +459,18 @@ class SimpleCodeIndex:
 
                 for table in expected_tables:
                     if table in tables:
-                        print(f"✅ Table '{table}' exists")
+                        print(f"Table '{table}' exists")
                     else:
-                        print(f"❌ Missing table '{table}'")
+                        print(f"Missing table '{table}'")
                         issues.append(f"Missing table '{table}'")
 
                 conn.close()
 
             except Exception as e:
-                print(f"❌ Database error: {e}")
+                print(f"Database error: {e}")
                 issues.append(f"Database error: {e}")
         else:
-            print("⚠️  No database found - run indexing first")
+            print("No database found - run indexing first")
             issues.append("No database found")
 
         # Check permissions
@@ -419,28 +480,28 @@ class SimpleCodeIndex:
             with open(test_file, 'w') as f:
                 f.write("test")
             os.remove(test_file)
-            print("✅ Write permissions OK")
+            print("Write permissions OK")
         except Exception as e:
-            print(f"❌ Permission issue: {e}")
+            print(f"Permission issue: {e}")
             issues.append(f"Permission issue: {e}")
 
         # Check directory access
         current_dir = os.getcwd()
         if os.access(current_dir, os.R_OK):
-            print("✅ Directory read access OK")
+            print("Directory read access OK")
         else:
-            print("❌ Cannot read current directory")
+            print("Cannot read current directory")
             issues.append("Directory read access denied")
 
         # Summary
         print("\n" + "=" * 50)
         if not issues:
-            print("✅ All diagnostics passed - tool is ready to use!")
+            print("All diagnostics passed - tool is ready to use!")
             print("\nNext steps:")
             print("1. Index a directory: python3 codesearch.py index .")
             print("2. Search for code: python3 codesearch.py search \"query\"")
         else:
-            print("⚠️  Issues found:")
+            print("Issues found:")
             for issue in issues:
                 print(f"  • {issue}")
             print("\nTry running: python3 codesearch.py doctor --help")
@@ -464,6 +525,7 @@ QUICK START FOR AGENTS
 3. Index directory: python3 codesearch.py index .
 4. Search code: python3 codesearch.py search "your query"
 5. Run diagnostics: python3 codesearch.py doctor
+6. Clear index: python3 codesearch.py clear
 
 COMMANDS
 ────────
@@ -472,6 +534,7 @@ search <query>       - Search indexed code using keyword matching
 status               - Show current index status and statistics
 help                 - Show this detailed help information
 doctor               - Run diagnostic checks on tool and database
+clear                - Clear all indexed data and reset database
 
 SEARCH USAGE EXAMPLES
 ─────────────────────
@@ -582,7 +645,7 @@ Run '%(prog)s --help' to understand all capabilities.
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
-    parser.add_argument('command', choices=['index', 'search', 'status', 'help', 'doctor'],
+    parser.add_argument('command', choices=['index', 'search', 'status', 'help', 'doctor', 'clear'],
                        help='Command to run. Commands:')
     parser.add_argument('path_or_query', nargs='?',
                        help='Directory path for index command, or search query for search command')
@@ -631,6 +694,9 @@ Run '%(prog)s --help' to understand all capabilities.
 
     elif args.command == 'status':
         index.print_status()
+
+    elif args.command == 'clear':
+        index.clear_index()
 
     elif args.command == 'doctor':
         index.run_diagnostics()
